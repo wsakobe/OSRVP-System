@@ -1,6 +1,9 @@
 #include<cstdio>
+#include<opencv2/opencv.hpp>
+
+using namespace cv;
 
 int main() {
-	printf("Hello world\n");
+	Mat Img = imread("a.jpg");
 	return 0;
 }
