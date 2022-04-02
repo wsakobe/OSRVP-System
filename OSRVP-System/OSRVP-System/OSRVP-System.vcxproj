@@ -146,6 +146,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ReadMarker\corner_array_organization.cpp" />
+    <ClCompile Include="ReadMarker\final_election.cpp" />
+    <ClCompile Include="ReadMarker\identify_marker.cpp" />
+    <ClCompile Include="ReadMarker\pre_filter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
