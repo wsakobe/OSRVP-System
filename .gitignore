@@ -32,3 +32,5 @@
 *.app
 /.vs/OSRVP-System/v16
 /OSRVP-System/.vs/OSRVP-System/v16
+/OSRVP-System/Debug
+/OSRVP-System/OSRVP-System/Debug
