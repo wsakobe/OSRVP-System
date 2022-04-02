@@ -4,6 +4,6 @@
 using namespace cv;
 
 int main() {
-	Mat Img = imread("a.jpg");
+	Mat Img = imread("b.jpg");
 	return 0;
 }
