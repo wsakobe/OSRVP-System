@@ -1,0 +1,72 @@
+﻿  main.cpp
+  Defining YAML_CPP_API for DLL import
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\parser.h(85,28): warning C4251: “YAML::Parser::m_pScanner”: class“std::unique_ptr<YAML::Scanner,std::default_delete<YAML::Scanner>>”需要有 dll 接口由 class“YAML::Parser”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\parser.h(85): message : 参见“std::unique_ptr<YAML::Scanner,std::default_delete<YAML::Scanner>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\parser.h(86,31): warning C4251: “YAML::Parser::m_pDirectives”: class“std::unique_ptr<YAML::Directives,std::default_delete<YAML::Directives>>”需要有 dll 接口由 class“YAML::Parser”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\parser.h(86): message : 参见“std::unique_ptr<YAML::Directives,std::default_delete<YAML::Directives>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\binary.h(65,30): warning C4251: “YAML::Binary::m_data”: class“std::vector<uchar,std::allocator<uchar>>”需要有 dll 接口由 class“YAML::Binary”的客户端使用
+D:\opencv\opencv\build\include\opencv2\core\mat.hpp(2722): message : 参见“std::vector<uchar,std::allocator<uchar>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\ostream_wrapper.h(49,29): warning C4251: “YAML::ostream_wrapper::m_buffer”: class“std::vector<char,std::allocator<char>>”需要有 dll 接口由 class“YAML::ostream_wrapper”的客户端使用
+D:\opencv\opencv\build\include\opencv2\features2d.hpp(1337): message : 参见“std::vector<char,std::allocator<char>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\emitter.h(132,33): warning C4251: “YAML::Emitter::m_pState”: class“std::unique_ptr<YAML::EmitterState,std::default_delete<YAML::EmitterState>>”需要有 dll 接口由 class“YAML::Emitter”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\emitter.h(132): message : 参见“std::unique_ptr<YAML::EmitterState,std::default_delete<YAML::EmitterState>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\exceptions.h(153,58): warning C4275: 非 dll 接口 class“std::runtime_error”用作 dll 接口 class“YAML::Exception”的基
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\stdexcept(107): message : 参见“std::runtime_error”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\exceptions.h(153): message : 参见“YAML::Exception”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\exceptions.h(162,15): warning C4251: “YAML::Exception::msg”: class“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”需要有 dll 接口由 class“YAML::Exception”的客户端使用
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\xstring(4905): message : 参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\node.h(135,15): warning C4251: “YAML::Node::m_invalidKey”: class“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”需要有 dll 接口由 class“YAML::Node”的客户端使用
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\xstring(4905): message : 参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\node.h(136,40): warning C4251: “YAML::Node::m_pMemory”: class“std::shared_ptr<YAML::detail::memory_holder>”需要有 dll 接口由 class“YAML::Node”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\ptr.h(24): message : 参见“std::shared_ptr<YAML::detail::memory_holder>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\memory.h(31,9): warning C4251: “YAML::detail::memory::m_nodes”: class“std::set<YAML::detail::shared_node,std::less<YAML::detail::shared_node>,std::allocator<YAML::detail::shared_node>>”需要有 dll 接口由 class“YAML::detail::memory”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\memory.h(30): message : 参见“std::set<YAML::detail::shared_node,std::less<YAML::detail::shared_node>,std::allocator<YAML::detail::shared_node>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\memory.h(42,17): warning C4251: “YAML::detail::memory_holder::m_pMemory”: class“std::shared_ptr<YAML::detail::memory>”需要有 dll 接口由 class“YAML::detail::memory_holder”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\ptr.h(25): message : 参见“std::shared_ptr<YAML::detail::memory>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(104,15): warning C4251: “YAML::detail::node_data::m_tag”: class“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”需要有 dll 接口由 class“YAML::detail::node_data”的客户端使用
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\xstring(4905): message : 参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(108,15): warning C4251: “YAML::detail::node_data::m_scalar”: class“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”需要有 dll 接口由 class“YAML::detail::node_data”的客户端使用
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\xstring(4905): message : 参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(112,12): warning C4251: “YAML::detail::node_data::m_sequence”: class“std::vector<YAML::detail::node *,std::allocator<YAML::detail::node *>>”需要有 dll 接口由 class“YAML::detail::node_data”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_iterator.h(39): message : 参见“std::vector<YAML::detail::node *,std::allocator<YAML::detail::node *>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(118,12): warning C4251: “YAML::detail::node_data::m_map”: class“std::vector<std::pair<YAML::detail::node *,YAML::detail::node *>,std::allocator<std::pair<YAML::detail::node *,YAML::detail::node *>>>”需要有 dll 接口由 class“YAML::detail::node_data”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_iterator.h(40): message : 参见“std::vector<std::pair<YAML::detail::node *,YAML::detail::node *>,std::allocator<std::pair<YAML::detail::node *,YAML::detail::node *>>>”的声明
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(122,20): warning C4251: “YAML::detail::node_data::m_undefinedPairs”: class“std::list<YAML::detail::node_data::kv_pair,std::allocator<std::pair<YAML::detail::node *,YAML::detail::node *>>>”需要有 dll 接口由 class“YAML::detail::node_data”的客户端使用
+F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib\yaml-cpp\node\detail\node_data.h(121): message : 参见“std::list<YAML::detail::node_data::kv_pair,std::allocator<std::pair<YAML::detail::node *,YAML::detail::node *>>>”的声明
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) const YAML::BadSubscript::`vftable'" (__imp_??_7BadSubscript@YAML@@6B@)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) class YAML::Node __cdecl YAML::LoadFile(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (__imp_?LoadFile@YAML@@YA?AVNode@1@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: virtual __cdecl YAML::InvalidNode::~InvalidNode(void)" (__imp_??1InvalidNode@YAML@@UEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: virtual __cdecl YAML::RepresentationException::~RepresentationException(void)" (__imp_??1RepresentationException@YAML@@UEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: virtual __cdecl YAML::BadConversion::~BadConversion(void)" (__imp_??1BadConversion@YAML@@UEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: virtual __cdecl YAML::BadSubscript::~BadSubscript(void)" (__imp_??1BadSubscript@YAML@@UEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: void __cdecl YAML::detail::node_data::convert_to_map(class std::shared_ptr<class YAML::detail::memory_holder> const &)" (__imp_?convert_to_map@node_data@detail@YAML@@AEAAXAEBV?$shared_ptr@Vmemory_holder@detail@YAML@@@std@@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: void __cdecl YAML::detail::node_data::insert_map_pair(class YAML::detail::node &,class YAML::detail::node &)" (__imp_?insert_map_pair@node_data@detail@YAML@@AEAAXAEAVnode@23@0@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: void __cdecl YAML::detail::node_data::mark_defined(void)" (__imp_?mark_defined@node_data@detail@YAML@@QEAAXXZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: void __cdecl YAML::detail::memory_holder::merge(class YAML::detail::memory_holder &)" (__imp_?merge@memory_holder@detail@YAML@@QEAAXAEAV123@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::BadSubscript::BadSubscript(class YAML::BadSubscript const &)" (__imp_??0BadSubscript@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::detail::memory_holder::~memory_holder(void)" (__imp_??1memory_holder@detail@YAML@@QEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: class YAML::detail::iterator_base<struct YAML::detail::iterator_value const > __cdecl YAML::Node::end(void)const " (__imp_?end@Node@YAML@@QEBA?AV?$iterator_base@$$CBUiterator_value@detail@YAML@@@detail@2@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: class YAML::detail::iterator_base<struct YAML::detail::iterator_value const > __cdecl YAML::Node::begin(void)const " (__imp_?begin@Node@YAML@@QEBA?AV?$iterator_base@$$CBUiterator_value@detail@YAML@@@detail@2@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: void __cdecl YAML::Node::Assign(char const *)" (__imp_?Assign@Node@YAML@@AEAAXPEBD@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const & __cdecl YAML::Node::Scalar(void)const " (__imp_?Scalar@Node@YAML@@QEBAAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::BadConversion::BadConversion(class YAML::BadConversion const &)" (__imp_??0BadConversion@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: enum YAML::NodeType::value __cdecl YAML::Node::Type(void)const " (__imp_?Type@Node@YAML@@QEBA?AW4value@NodeType@2@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: struct YAML::Mark __cdecl YAML::Node::Mark(void)const " (__imp_?Mark@Node@YAML@@QEBA?AU02@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::Exception::Exception(class YAML::Exception const &)" (__imp_??0Exception@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::RepresentationException::RepresentationException(class YAML::RepresentationException const &)" (__imp_??0RepresentationException@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::InvalidNode::InvalidNode(class YAML::InvalidNode const &)" (__imp_??0InvalidNode@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: void __cdecl YAML::Node::EnsureNodeExists(void)const " (__imp_?EnsureNodeExists@Node@YAML@@AEBAXXZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::Node::~Node(void)" (__imp_??1Node@YAML@@QEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: __cdecl YAML::Node::Node(class YAML::detail::node &,class std::shared_ptr<class YAML::detail::memory_holder>)" (__imp_??0Node@YAML@@AEAA@AEAVnode@detail@1@V?$shared_ptr@Vmemory_holder@detail@YAML@@@std@@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) private: __cdecl YAML::Node::Node(enum YAML::Node::Zombie)" (__imp_??0Node@YAML@@AEAA@W4Zombie@01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::Node::Node(class YAML::Node const &)" (__imp_??0Node@YAML@@QEAA@AEBV01@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::Node::Node(void)" (__imp_??0Node@YAML@@QEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: bool __cdecl YAML::detail::node_data::is_defined(void)const " (__imp_?is_defined@node_data@detail@YAML@@QEBA_NXZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: class YAML::detail::node & __cdecl YAML::detail::memory_holder::create_node(void)" (__imp_?create_node@memory_holder@detail@YAML@@QEAAAEAVnode@23@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::detail::memory_holder::memory_holder(void)" (__imp_??0memory_holder@detail@YAML@@QEAA@XZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: bool __cdecl YAML::Node::IsSequence(void)const " (__imp_?IsSequence@Node@YAML@@QEBA_NXZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: bool __cdecl YAML::Node::IsScalar(void)const " (__imp_?IsScalar@Node@YAML@@QEBA_NXZ)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::BadConversion::BadConversion(struct YAML::Mark const &)" (__imp_??0BadConversion@YAML@@QEAA@AEBUMark@1@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::InvalidNode::InvalidNode(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (__imp_??0InvalidNode@YAML@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
+main.obj : error LNK2001: 无法解析的外部符号 "__declspec(dllimport) public: __cdecl YAML::RepresentationException::RepresentationException(struct YAML::Mark const &,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (__imp_??0RepresentationException@YAML@@QEAA@AEBUMark@1@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
+F:\OSRVP-System\OSRVP-System\x64\Release\OSRVP-System.exe : fatal error LNK1120: 36 个无法解析的外部命令
