@@ -76,15 +76,14 @@ FinalElection::~FinalElection() {
 }
 
 vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<Point> corners) {
-    cornerPoints = subpixelRefinement(img, corners);
-    cornerPoints = fitQuadraticSurface(img, cornerPoints);
-    cornerPoints = templateMatching(img, cornerPoints);
+    subpixelRefinement(img, corners);
+    fitQuadraticSurface(img);
+    templateMatching(img);
     
     return cornerPoints;
 }
 
-vector<cornerInformation> FinalElection::subpixelRefinement(Mat& img, vector<Point> corners) {
-    cornerInformation cur;
+void FinalElection::subpixelRefinement(Mat& img, vector<Point> corners) {
     for (int i = 0; i < corners.size(); i++) {
         cur.point_in_pixel.x = corners[i].x;
         cur.point_in_pixel.y = corners[i].y;
@@ -108,24 +107,24 @@ vector<cornerInformation> FinalElection::subpixelRefinement(Mat& img, vector<Poi
         solve(grad_neighbor, B, subpixel, DECOMP_SVD);
         cur.point_in_subpixel.x = subpixel.at<float>(0, 0) + corners[i].x;
         cur.point_in_subpixel.y = subpixel.at<float>(1, 0) + corners[i].y;
-        cout << cur.point_in_subpixel.x << ' ' << cur.point_in_subpixel.y << endl;
         cornerPoints.push_back(cur);
     }
     
-    return cornerPoints;
+    return;
 }
 
-vector<cornerInformation> FinalElection::fitQuadraticSurface(Mat& img, vector<cornerInformation> cornerPoints) {
+void FinalElection::fitQuadraticSurface(Mat& img) {
     for (int i = 0; i < cornerPoints.size(); i++) {
         Rect rect(cornerPoints[i].point_in_pixel.x - maskSurface, cornerPoints[i].point_in_pixel.y - maskSurface, maskSurface * 2 + 1, maskSurface * 2 + 1);
         Mat image_roi = img(rect);
+        cout << cornerPoints[i].point_in_subpixel.x << ' ' << cornerPoints[i].point_in_subpixel.y << endl;
     }
     
-    return cornerPoints;
+    return;
 }
 
-vector<cornerInformation> FinalElection::templateMatching(Mat& img, vector<cornerInformation> cornerPoints) {
+void FinalElection::templateMatching(Mat& img) {
     
     
-    return cornerPoints;
+    return;
 }

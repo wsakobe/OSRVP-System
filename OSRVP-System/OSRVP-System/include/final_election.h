@@ -26,9 +26,9 @@ public:
 	vector<cornerInformation> cornerPoints;
 
 	vector<cornerInformation> finalElection(Mat& img, vector<Point> candidate_corners);
-	vector<cornerInformation> subpixelRefinement(Mat& img, vector<Point> candidate_corners);
-	vector<cornerInformation> fitQuadraticSurface(Mat& img, vector<cornerInformation> cornerPoints);
-	vector<cornerInformation> templateMatching(Mat& img, vector<cornerInformation> cornerPoints);
+	void subpixelRefinement(Mat& img, vector<Point> candidate_corners);
+	void fitQuadraticSurface(Mat& img);
+	void templateMatching(Mat& img);
 
 private:
 	Mat tmp, img_neighbor, grad_neighbor, grad_neighbor_x, grad_neighbor_y, surface_temp_x, surface_temp_y, surface_temp;
@@ -39,6 +39,7 @@ private:
 	int maskSurfaceL = 2 * maskSurface + 1;
 	Mat grad_row, surface_row;
 	double result;
+	cornerInformation cur;
 };
 
 #endif
