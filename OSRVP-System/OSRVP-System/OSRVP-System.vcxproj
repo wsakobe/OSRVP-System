@@ -156,6 +156,7 @@
     <ClCompile Include="ReadMarker\pre_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\final_election.h" />
     <ClInclude Include="include\pre-filter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
