@@ -11,7 +11,7 @@ public:
 	int maskR = 5;
 	int kernal_size = 7;
 	int sigma = 3;
-	Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence;
+	Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence, img_blur;
 	vector<Point> preFilter(Mat& image, int number); // A Pre-Filter based on image gradient and Hessian matrix
 
 private:
