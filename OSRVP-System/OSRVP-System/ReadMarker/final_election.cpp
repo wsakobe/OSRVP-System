@@ -3,8 +3,8 @@
 using namespace std;
 
 FinalElection::FinalElection() {
-    int maskL = 13;
     //Search for the template in the dic. If not exist, generate once.
+    int maskL = 13;
     String tmpFile = "template";
     tmpFile.append(std::to_string(maskL));
     tmpFile.append(".bmp");
@@ -97,7 +97,7 @@ FinalElection::~FinalElection() {
     tmp.release();
 }
 
-vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<Point> corners) {
+vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
     subpixelRefinement(img, corners);
     fitQuadraticSurface(img);
     templateMatching(img);
@@ -105,12 +105,12 @@ vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<Point> c
     return cornerPoints;
 }
 
-void FinalElection::subpixelRefinement(Mat& img, vector<Point> corners) {
+void FinalElection::subpixelRefinement(Mat& img, vector<cornerPreInfo> corners) {
     for (int i = 0; i < corners.size(); i++) {
-        cur.point_in_pixel.x = corners[i].x;
-        cur.point_in_pixel.y = corners[i].y;
+        cur.point_in_pixel = corners[i].corner_position;
+        cur.hessian_response_score = corners[i].response_score;
 
-        Rect rect_neighbor(corners[i].x - maskSurface, corners[i].y - maskSurface, maskSurfaceL, maskSurfaceL);
+        Rect rect_neighbor(corners[i].corner_position.x - maskSurface, corners[i].corner_position.y - maskSurface, maskSurfaceL, maskSurfaceL);
         img_neighbor = img(rect_neighbor);
 
         Scharr(img_neighbor, grad_neighbor_x, CV_32FC1, 1, 0);
@@ -127,8 +127,8 @@ void FinalElection::subpixelRefinement(Mat& img, vector<Point> corners) {
         }
 
         solve(grad_neighbor, B, subpixel, DECOMP_SVD);
-        cur.point_in_subpixel.x = subpixel.at<float>(0, 0) + corners[i].x - maskSurface;
-        cur.point_in_subpixel.y = subpixel.at<float>(1, 0) + corners[i].y - maskSurface;
+        cur.point_in_subpixel.x = subpixel.at<float>(0, 0) + corners[i].corner_position.x - maskSurface;
+        cur.point_in_subpixel.y = subpixel.at<float>(1, 0) + corners[i].corner_position.y - maskSurface;
         cornerPoints.push_back(cur);
     }
     
@@ -184,9 +184,10 @@ void FinalElection::templateMatching(Mat& img) {
         meanStdDev(crop, meanCrop, stdCrop);
 
         float covar = (tmpCrop - meanTmp).dot(crop - meanCrop) / (maskTemp * maskTemp);
-        cornerPoints[i].response_score = covar / (stdTmp[0] * stdCrop[0]);
-        if (cornerPoints[i].response_score > response_score_max) {
-            response_score_max = cornerPoints[i].response_score;
+        cornerPoints[i].template_response_score = covar / (stdTmp[0] * stdCrop[0]);
+        if (cornerPoints[i].template_response_score > template_response_score_max) {
+            template_response_score_max = cornerPoints[i].template_response_score;
+            hessian_response_score_max = cornerPoints[i].hessian_response_score;
         }
     }
     /*
@@ -198,7 +199,7 @@ void FinalElection::templateMatching(Mat& img) {
     }*/
     for (vector<cornerInformation>::iterator it = cornerPoints.begin(); it != cornerPoints.end();)
     {
-        if ((*it).response_score < response_score_max - T_response)
+        if (((*it).template_response_score * lamda + (*it).hessian_response_score) < (lamda * template_response_score_max + hessian_response_score_max - T_response))
             it = cornerPoints.erase(it);
         else
             it++;
@@ -207,7 +208,7 @@ void FinalElection::templateMatching(Mat& img) {
     for (int i = 0; i < cornerPoints.size(); i++) {
         circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
         std::stringstream ss;
-        ss << std::setprecision(2) << cornerPoints[i].response_score;
+        ss << std::setprecision(3) << (cornerPoints[i].template_response_score * lamda + cornerPoints[i].hessian_response_score);
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
     }

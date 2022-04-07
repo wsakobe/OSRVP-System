@@ -13,12 +13,17 @@
 using namespace cv;
 using namespace std;
 
+struct cornerPreInfo {
+	Point corner_position;
+	float response_score;
+};
+
 struct cornerInformation {
 	Point   point_in_pixel;
 	Point2f point_in_subpixel;
 	float angle_black_edge = -1.0;
 	float angle_white_edge = -1.0;
-	float response_score;
+	float hessian_response_score, template_response_score;
 };
 
 class FinalElection {
@@ -28,8 +33,8 @@ public:
 	
 	vector<cornerInformation> cornerPoints;
 
-	vector<cornerInformation> finalElection(Mat& img, vector<Point> candidate_corners);
-	void subpixelRefinement(Mat& img, vector<Point> candidate_corners);
+	vector<cornerInformation> finalElection(Mat& img, vector<cornerPreInfo> candidate_corners);
+	void subpixelRefinement(Mat& img, vector<cornerPreInfo> candidate_corners);
 	void fitQuadraticSurface(Mat& img);
 	void templateMatching(Mat& img);
 
@@ -49,7 +54,7 @@ private:
 	
 	double result;
 	float angle1, angle2, edge_angle, direction_angle;
-	float response_score_max = -1.0, T_response = 0.3;
+	float lamda = 1.5, template_response_score_max = -1.0, hessian_response_score_max = 0, T_response = 0.3;
 
 	cornerInformation cur;	
 };

@@ -7,8 +7,8 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 1.0, 0, 0,
                                                     0, 1.0, 0,
                                                     0, 0, 1);
 const Mat DistCoeffLeft = (Mat_<double>(1, 5) << 0, 0, 0, 0, 0);
-const int numberOfCorner = 10 * 10;
-vector<Point> candidate_corners;
+const int numberOfCorner = 30;
+vector<cornerPreInfo> candidate_corners;
 
 int main(int argc, char* argv[]) {
     Mat image = imread(".\\Data\\1.jpg");

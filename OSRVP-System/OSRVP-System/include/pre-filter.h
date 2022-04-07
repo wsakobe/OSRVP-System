@@ -12,10 +12,11 @@ public:
 	int kernal_size = 7;
 	int sigma = 3;
 	Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence, img_blur;
-	vector<Point> preFilter(Mat& image, int number); // A Pre-Filter based on image gradient and Hessian matrix
+	vector<cornerPreInfo> preFilter(Mat& image, int number); // A Pre-Filter based on image gradient and Hessian matrix
 
 private:
-	vector<Point> candidate_corners;
+	vector<cornerPreInfo> corners;
+	cornerPreInfo temporal_corner;
 };
 
 #endif // INCLUDE_PRE_FILTER_H_
