@@ -7,8 +7,8 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     GaussianBlur(img, img_blur, Size(kernal_size, kernal_size), sigma);
-    Scharr(img_blur, Gx, CV_32FC1, 1, 0, 0.03);
-    Scharr(img_blur, Gy, CV_32FC1, 0, 1, 0.03);
+    Scharr(img_blur, Gx, CV_32FC1, 1, 0);
+    Scharr(img_blur, Gy, CV_32FC1, 0, 1);
 
     Scharr(Gx, Gxx, CV_32FC1, 1, 0);
     Scharr(Gy, Gyy, CV_32FC1, 0, 1);
@@ -32,14 +32,14 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
                 G_score_after_NMS.ptr<float>(i)[j] = 0;
             else {
                 temporal_corner.corner_position = Point(j ,i);
-                temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j];
+                temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j] / 200;
                 corners.push_back(temporal_corner);
 
-                /*circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
+                circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
                 std::stringstream ss;
                 ss << std::setprecision(4) << G_score_after_NMS.ptr<float>(i)[j];
                 string s = ss.str();
-                putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));*/
+                putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
             }
         }	
     //imshow("imgMark", imgMark);

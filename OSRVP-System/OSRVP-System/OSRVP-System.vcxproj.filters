@@ -38,5 +38,8 @@
     <ClInclude Include="include\final_election.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\corner_array_organization.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

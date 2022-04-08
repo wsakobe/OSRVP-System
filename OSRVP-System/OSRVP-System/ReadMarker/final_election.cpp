@@ -172,6 +172,9 @@ void FinalElection::templateMatching(Mat& img) {
         
         edgeIdx   = round((cornerPoints[i].angle_black_edge + 135) / 5);
         directIdx = round((cornerPoints[i].angle_white_edge + 135) / 5);
+
+        edgeIdx %= 36;
+        directIdx %= 36;
         
         if (edgeIdx < 0 || edgeIdx > 35) edgeIdx = 0;
         if (directIdx < 0 || directIdx > 35) directIdx = 0;
@@ -190,16 +193,10 @@ void FinalElection::templateMatching(Mat& img) {
             hessian_response_score_max = cornerPoints[i].hessian_response_score;
         }
     }
-    /*
-    vector<cornerInformation>::iterator iter;
-    for (iter = cornerPoints.begin(); iter != cornerPoints.end(); iter++) {
-        if ((*iter).response_score < response_score_max - T_response) {
-            cornerPoints.erase(iter);
-        }
-    }*/
+
     for (vector<cornerInformation>::iterator it = cornerPoints.begin(); it != cornerPoints.end();)
     {
-        if (((*it).template_response_score * lamda + (*it).hessian_response_score) < (lamda * template_response_score_max + hessian_response_score_max - T_response))
+        if (((*it).template_response_score + (*it).hessian_response_score * lamda) < (template_response_score_max + lamda * hessian_response_score_max - T_response))
             it = cornerPoints.erase(it);
         else
             it++;
@@ -208,10 +205,11 @@ void FinalElection::templateMatching(Mat& img) {
     for (int i = 0; i < cornerPoints.size(); i++) {
         circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
         std::stringstream ss;
-        ss << std::setprecision(3) << (cornerPoints[i].template_response_score * lamda + cornerPoints[i].hessian_response_score);
+        ss << std::setprecision(3) << (cornerPoints[i].template_response_score + cornerPoints[i].hessian_response_score * lamda);
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
     }
+
     imshow("imgMark", imgMark);
     waitKey(0);
 

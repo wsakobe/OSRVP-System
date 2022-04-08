@@ -1,4 +1,4 @@
-#include "include\pre-filter.h"
+#include "include/corner_array_organization.h"
 
 using namespace cv;
 using namespace std;
@@ -7,22 +7,39 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 1.0, 0, 0,
                                                     0, 1.0, 0,
                                                     0, 0, 1);
 const Mat DistCoeffLeft = (Mat_<double>(1, 5) << 0, 0, 0, 0, 0);
-const int numberOfCorner = 30;
+
+const int numberOfCorner = 100;
+
 vector<cornerPreInfo> candidate_corners;
+vector<cornerInformation> cornerPoints;
 
 int main(int argc, char* argv[]) {
-    Mat image = imread(".\\Data\\1.jpg");
-    Mat image_gray;
-    cvtColor(image, image_gray, COLOR_BGR2GRAY);
-    image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1./255;
-    
-    PreFilter pF;
-    candidate_corners = pF.preFilter(image_gray, 2 * numberOfCorner);
+    double start_time, end_time;
+    for (int i = 0; i < 1; i++) {
+        //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        Mat image = imread(".\\Data\\1.bmp");
+        Mat image_gray;
+        cvtColor(image, image_gray, COLOR_BGR2GRAY);
+        image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1./255;
+                
+        imageParams ImgParams;
+        ImgParams.height = image.rows;
+        ImgParams.width = image.cols;
 
-    FinalElection fE;
-    fE.finalElection(image_gray, candidate_corners);
+        PreFilter pF;
+        candidate_corners = pF.preFilter(image_gray, 2 * numberOfCorner);
 
-    waitKey(0);
-    destroyAllWindows();
+        FinalElection fE;
+        cornerPoints = fE.finalElection(image_gray, candidate_corners);
+
+        ArrayOrganization arrayOrg;
+        arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+
+        //end_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        //cout << "FInal-election:" << (end_time - start_time) << endl;
+        //waitKey(0);
+        destroyAllWindows();
+    }
+
     return 0;
 }

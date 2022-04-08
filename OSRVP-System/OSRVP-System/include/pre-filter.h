@@ -1,10 +1,25 @@
 #ifndef INCLUDE_PRE_FILTER_H_
 #define INCLUDE_PRE_FILTER_H_
 
-#include "final_election.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <iostream> 
 
 using namespace std;
 using namespace cv;
+
+struct imageParams {	// Basic Image Parameters
+	int width, height;
+};
+
+struct cornerPreInfo {
+	Point corner_position;
+	float response_score;
+};
 
 class PreFilter {
 public:

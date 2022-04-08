@@ -1,22 +1,12 @@
 #ifndef INCLUDE_FINAL_ELECTION_H_
 #define INCLUDE_FINAL_ELECTION_H_
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-#include <algorithm>
-#include <cstdlib>
-#include <vector>
-#include <iostream> 
+#include "pre-filter.h"
 
 #define PI 3.1415926535
 
 using namespace cv;
 using namespace std;
-
-struct cornerPreInfo {
-	Point corner_position;
-	float response_score;
-};
 
 struct cornerInformation {
 	Point   point_in_pixel;
@@ -54,7 +44,7 @@ private:
 	
 	double result;
 	float angle1, angle2, edge_angle, direction_angle;
-	float lamda = 1.5, template_response_score_max = -1.0, hessian_response_score_max = 0, T_response = 0.3;
+	float lamda = 0.2, template_response_score_max = -1.0, hessian_response_score_max = 0, T_response = 0.3;
 
 	cornerInformation cur;	
 };

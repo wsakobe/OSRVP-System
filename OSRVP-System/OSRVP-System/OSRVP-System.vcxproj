@@ -145,7 +145,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world453.lib;yaml-cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world453.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -156,6 +156,7 @@
     <ClCompile Include="ReadMarker\pre_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\corner_array_organization.h" />
     <ClInclude Include="include\final_election.h" />
     <ClInclude Include="include\pre-filter.h" />
   </ItemGroup>
