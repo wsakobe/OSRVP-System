@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     double start_time, end_time;
     for (int i = 0; i < 1; i++) {
         //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        Mat image = imread(".\\Data\\1.bmp");
+        Mat image = imread(".\\Data\\1.jpg");
         Mat image_gray;
         cvtColor(image, image_gray, COLOR_BGR2GRAY);
         image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1./255;

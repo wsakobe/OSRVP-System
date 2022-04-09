@@ -6,6 +6,8 @@
 
 #include "final_election.h"
 
+#define MAX_DISTANCE 10000.0;
+
 struct matrixInform
 {
 	int     mLabel = -1;      // À˘ Ùæÿ’Û±‡∫≈
@@ -16,8 +18,8 @@ class ArrayOrganization {
 public:
 	vector<matrixInform> matrix_array_pos;
 	void delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints);
-	void removeWrongEdges(Subdiv2D subdiv_delaunay, vector<cornerInformation> cornerPoints);
-	void organizeCornersIntoArrays(Subdiv2D subdiv_delaunay, vector<cornerInformation> cornerPoints);
+	void removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints);
+	void organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints);
 
 	vector<Point> edge_list_ID;
 
@@ -31,8 +33,11 @@ private:
 	float edgeAngle2(Point2f a, Point2f b);
 	const float maxCornerDistance = 50.0, maxCornerAngle = 18.0;
 	float edge_angle;
+	float dist_now, dist_min = 1000.0;
 
-	int org_ID, dst_ID;
+	bool selection[8 * 100];
+
+	int org_ID, dst_ID, last_ID;
 };
 
 #endif
