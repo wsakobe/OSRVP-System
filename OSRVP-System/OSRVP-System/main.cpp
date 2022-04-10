@@ -8,7 +8,8 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 1.0, 0, 0,
                                                     0, 0, 1);
 const Mat DistCoeffLeft = (Mat_<double>(1, 5) << 0, 0, 0, 0, 0);
 
-const int numberOfCorner = 100;
+const int number_of_corner_x = 10;
+const int number_of_corner_y = 10;
 
 vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
         ImgParams.width = image.cols;
 
         PreFilter pF;
-        candidate_corners = pF.preFilter(image_gray, 2 * numberOfCorner);
+        candidate_corners = pF.preFilter(image_gray, 2 * number_of_corner_x * number_of_corner_y);
 
         FinalElection fE;
         cornerPoints = fE.finalElection(image_gray, candidate_corners);

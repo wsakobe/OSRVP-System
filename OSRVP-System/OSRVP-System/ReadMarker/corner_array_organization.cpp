@@ -3,7 +3,7 @@
 using namespace std;
 using namespace cv;
 
-bool cmp(const Point& a, const Point& b)
+inline bool cmp(const Point& a, const Point& b)
 {
     return a.x < b.x;
 }
@@ -100,18 +100,93 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
+    int matrix_number = 0;
+    vector<matrixInform> corner_IDs(cornerPoints.size());
+    vector<array<Point, 4>> direction(cornerPoints.size());
+    memset(corner_visited, 0, sizeof(corner_visited));
+    
+    for (int i = 0; i < edge_list_ID.size(); i++) {
+        start_corner = 0;
+        end_corner = 1;
+        if (!corner_visited[i]) {
+            q.push(edge_list_ID[i].x);
+            corner_visited[i] = true;
+            corner_IDs[i].mPos = Point(10, 10);
+            direction[i] = { Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0) };
+            while (start_corner != end_corner) {
+                int corner_now = q.front();
+                corner_visited[corner_now] = true;
+                for (int j = 0; j < edge_list_ID.size(); j++) {
+                    if (edge_list_ID[j].x == corner_now) {
+                        if (!corner_visited[edge_list_ID[j].y]) {
+                            q.push(edge_list_ID[j].y);
+                       
+                            Point p = directionJudge(fastAtan2(cornerPoints[corner_now].point_in_subpixel.y - cornerPoints[edge_list_ID[j].y].point_in_subpixel.y, cornerPoints[corner_now].point_in_subpixel.x - cornerPoints[edge_list_ID[j].y].point_in_subpixel.x), cornerPoints[corner_now], cornerPoints[edge_list_ID[j].y]);
+                            corner_IDs[edge_list_ID[j].y].mLabel = matrix_number;
+                            corner_IDs[edge_list_ID[j].y].mPos = direction[corner_now][p.x] + corner_IDs[corner_now].mPos;
+
+                            direction[edge_list_ID[j].y][p.y] = direction[corner_now][(p.x + 2) % 4];
+                            direction[edge_list_ID[j].y][(p.y + 1) % 4] = direction[corner_now][(p.x + 3) % 4];
+                            direction[edge_list_ID[j].y][(p.y + 2) % 4] = -direction[edge_list_ID[j].y][p.y];
+                            direction[edge_list_ID[j].y][(p.y + 3) % 4] = -direction[edge_list_ID[j].y][(p.y + 1) % 4];
+
+                            corner_visited[edge_list_ID[j].y] = true;
+                            end_corner++;
+                        }
+                    }
+                }
+                start_corner++;
+                q.pop();
+            }
+        }
+        matrix_number++;
+    }
+    for (int i = 0; i < edge_list_ID.size(); i++) {
+        std::stringstream ss;
+        ss << '(' << corner_IDs[i].mPos.x << ', ' << corner_IDs[i].mPos.y << ')';
+        string s = ss.str();
+        putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
+    }
+    imshow("Organization", imgMark);
+    waitKey(0);
 }
 
-float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {
+inline float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
-float ArrayOrganization::edgeAngle2(Point2f a, Point2f b) {
+inline float ArrayOrganization::edgeAngle2(Point2f a, Point2f b) {
     float angle = fastAtan2(b.y - a.y, b.x - a.x);
     if ((angle < 270) && (angle > 90))
         angle -= 180;
     if (angle >= 270)
         angle -= 360;
     return angle;        
+}
+
+inline Point ArrayOrganization::directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2) {
+    Point res;
+    if (angle >= 270)
+        angle -= 360;
+    if (angleJudge(angle, corner_1.angle_black_edge))         res.x = 0;
+    if (angleJudge(angle, corner_1.angle_white_edge))         res.x = 1;
+    if (angleJudge(angle, corner_1.angle_black_edge + 180))   res.x = 2;
+    if (angleJudge(angle, corner_1.angle_white_edge + 180))   res.x = 3;
+
+    if (angleJudge(angle, corner_2.angle_black_edge))         res.y = 0;
+    if (angleJudge(angle, corner_2.angle_white_edge))         res.y = 1;
+    if (angleJudge(angle, corner_2.angle_black_edge + 180))   res.y = 2;
+    if (angleJudge(angle, corner_2.angle_white_edge + 180))   res.y = 3;
+
+    return res;
+}
+
+inline bool ArrayOrganization::angleJudge(float angle1, float angle2) {
+    if ((angle1 - angle2) < maxCornerAngle)
+        return true;
+    else
+        return false;
 }

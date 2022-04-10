@@ -22,6 +22,7 @@ public:
 	void organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints);
 
 	vector<Point> edge_list_ID;
+	
 
 private:
 	Subdiv2D subdiv_delaunay;
@@ -31,13 +32,19 @@ private:
 
 	float edgeDistance2(Point2f a, Point2f b);
 	float edgeAngle2(Point2f a, Point2f b);
+	Point directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2);
+	bool angleJudge(float angle1, float angle2);
+
 	const float maxCornerDistance = 50.0, maxCornerAngle = 18.0;
 	float edge_angle;
 	float dist_now, dist_min = 1000.0;
 
-	bool selection[8 * 100];
+	bool selection[8 * 100], corner_visited[100];
 
 	int org_ID, dst_ID, last_ID;
+	int start_corner, end_corner;
+
+	queue <int> q;
 };
 
 #endif

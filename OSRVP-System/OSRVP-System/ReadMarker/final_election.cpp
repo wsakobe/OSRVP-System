@@ -97,7 +97,7 @@ FinalElection::~FinalElection() {
     tmp.release();
 }
 
-vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
+inline vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
     subpixelRefinement(img, corners);
     fitQuadraticSurface(img);
     templateMatching(img);
