@@ -23,6 +23,7 @@ public:
 
 	vector<Point> edge_list_ID;
 	
+	int matrix_with_ID[5][2 * 10][2 * 10]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
 
 private:
 	Subdiv2D subdiv_delaunay;
@@ -36,12 +37,12 @@ private:
 	bool angleJudge(float angle1, float angle2);
 
 	const float maxCornerDistance = 50.0, maxCornerAngle = 15.0;
-	float edge_angle;
+	float edge_angle, angle_oppo;
 	float dist_now, dist_min = 1000.0;
 
 	bool selection[8 * 100], corner_visited[100];
 
-	int org_ID, dst_ID, last_ID;
+	int org_ID, dst_ID, last_ID, last_ID_pos;
 	int start_corner, end_corner;
 
 	queue <int> q;
