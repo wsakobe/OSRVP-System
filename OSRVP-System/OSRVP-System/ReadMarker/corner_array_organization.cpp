@@ -108,6 +108,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
     vector<matrixInform> corner_IDs(cornerPoints.size());
     vector<array<Point, 4>> direction(cornerPoints.size());
     memset(corner_visited, 0, sizeof(corner_visited));
+    memset(matrix_with_ID, -1, sizeof(matrix_with_ID));
     
     for (int i = 0; i < edge_list_ID.size(); i++) {
         start_corner = 0;
@@ -134,8 +135,13 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
                             matrix_with_ID[corner_IDs[edge_list_ID[j].y].mLabel][corner_IDs[edge_list_ID[j].y].mPos.x][corner_IDs[edge_list_ID[j].y].mPos.y] = edge_list_ID[j].y;
 
                             direction[edge_list_ID[j].y][p.y] = -direction[corner_now][p.x];
-                            direction[edge_list_ID[j].y][(p.y + 1) % 4] = direction[corner_now][(p.x + 3) % 4];
                             direction[edge_list_ID[j].y][(p.y + 2) % 4] = -direction[edge_list_ID[j].y][p.y];
+                            if (cornerPoints[edge_list_ID[j].y].angle_black_edge < cornerPoints[edge_list_ID[j].y].angle_white_edge) {
+                                direction[edge_list_ID[j].y][(p.y + 1) % 4] = Point(direction[edge_list_ID[j].y][p.y].y, -direction[edge_list_ID[j].y][p.y].x);
+                            }
+                            else {
+                                direction[edge_list_ID[j].y][(p.y + 1) % 4] = Point(-direction[edge_list_ID[j].y][p.y].y, direction[edge_list_ID[j].y][p.y].x);
+                            }
                             direction[edge_list_ID[j].y][(p.y + 3) % 4] = -direction[edge_list_ID[j].y][(p.y + 1) % 4];
 
                             corner_visited[edge_list_ID[j].y] = true;
