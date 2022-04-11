@@ -46,7 +46,6 @@ void ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
             }
             edge_angle = edgeAngle2(cornerPoints[org_ID].point_in_subpixel, cornerPoints[dst_ID].point_in_subpixel);
             if ((abs(edge_angle - cornerPoints[org_ID].angle_black_edge) < maxCornerAngle) || (abs(edge_angle - cornerPoints[org_ID].angle_white_edge) < maxCornerAngle)){
-                
                 edge_list_ID.push_back(Point(org_ID, dst_ID));
                 edge_list_ID.push_back(Point(dst_ID, org_ID));
             }
@@ -111,11 +110,11 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
     for (int i = 0; i < edge_list_ID.size(); i++) {
         start_corner = 0;
         end_corner = 1;
-        if (!corner_visited[i]) {
+        if (!corner_visited[edge_list_ID[i].x]) {
             q.push(edge_list_ID[i].x);
-            corner_visited[i] = true;
-            corner_IDs[i].mPos = Point(10, 10);
-            direction[i] = { Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0) };
+            corner_visited[edge_list_ID[i].x] = true;
+            corner_IDs[edge_list_ID[i].x].mPos = Point(10, 10);
+            direction[edge_list_ID[i].x] = { Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0) };
             while (start_corner != end_corner) {
                 int corner_now = q.front();
                 corner_visited[corner_now] = true;
@@ -137,6 +136,8 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
                             end_corner++;
                         }
                     }
+                    if (edge_list_ID[j].x > corner_now)
+                        break;
                 }
                 start_corner++;
                 q.pop();
@@ -176,10 +177,10 @@ inline Point ArrayOrganization::directionJudge(float angle, cornerInformation co
     if (angleJudge(angle, corner_1.angle_black_edge + 180))   res.x = 2;
     if (angleJudge(angle, corner_1.angle_white_edge + 180))   res.x = 3;
 
-    if (angleJudge(angle, corner_2.angle_black_edge))         res.y = 0;
-    if (angleJudge(angle, corner_2.angle_white_edge))         res.y = 1;
-    if (angleJudge(angle, corner_2.angle_black_edge + 180))   res.y = 2;
-    if (angleJudge(angle, corner_2.angle_white_edge + 180))   res.y = 3;
+    if (angleJudge(angle, corner_2.angle_black_edge))         res.y = 2;
+    if (angleJudge(angle, corner_2.angle_white_edge))         res.y = 3;
+    if (angleJudge(angle, corner_2.angle_black_edge + 180))   res.y = 0;
+    if (angleJudge(angle, corner_2.angle_white_edge + 180))   res.y = 1;
 
     return res;
 }

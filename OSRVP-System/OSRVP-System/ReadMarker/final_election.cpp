@@ -97,7 +97,7 @@ FinalElection::~FinalElection() {
     tmp.release();
 }
 
-inline vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
+vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
     subpixelRefinement(img, corners);
     fitQuadraticSurface(img);
     templateMatching(img);
@@ -205,7 +205,8 @@ void FinalElection::templateMatching(Mat& img) {
     for (int i = 0; i < cornerPoints.size(); i++) {
         circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
         std::stringstream ss;
-        ss << std::setprecision(3) << (cornerPoints[i].template_response_score + cornerPoints[i].hessian_response_score * 0);
+        //ss << std::setprecision(3) << (cornerPoints[i].template_response_score + cornerPoints[i].hessian_response_score * 0);
+        ss << i;
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
     }
