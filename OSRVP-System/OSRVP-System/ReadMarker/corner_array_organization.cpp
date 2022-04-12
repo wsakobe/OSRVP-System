@@ -113,7 +113,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
     for (int i = 0; i < edge_list_ID.size(); i++) {
         start_corner = 0;
         end_corner = 1;
-        if (!corner_visited[edge_list_ID[i].x]) {
+        if ((!corner_visited[edge_list_ID[i].x]) && (cornerPoints[edge_list_ID[i].x].angle_black_edge > cornerPoints[edge_list_ID[i].x].angle_white_edge)) {
             q.push(edge_list_ID[i].x);
             corner_visited[edge_list_ID[i].x] = true;
             corner_IDs[edge_list_ID[i].x].mLabel = matrix_number;
@@ -129,14 +129,14 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
                         if (!corner_visited[edge_list_ID[j].y]) {
                             q.push(edge_list_ID[j].y);
                        
-                            Point p = directionJudge(fastAtan2(cornerPoints[corner_now].point_in_subpixel.y - cornerPoints[edge_list_ID[j].y].point_in_subpixel.y, cornerPoints[corner_now].point_in_subpixel.x - cornerPoints[edge_list_ID[j].y].point_in_subpixel.x), cornerPoints[corner_now], cornerPoints[edge_list_ID[j].y]);
+                            Point p = directionJudge(fastAtan2(cornerPoints[edge_list_ID[j].y].point_in_subpixel.y - cornerPoints[corner_now].point_in_subpixel.y, cornerPoints[edge_list_ID[j].y].point_in_subpixel.x - cornerPoints[corner_now].point_in_subpixel.x), cornerPoints[corner_now], cornerPoints[edge_list_ID[j].y]);
                             corner_IDs[edge_list_ID[j].y].mLabel = corner_IDs[edge_list_ID[j].x].mLabel;
                             corner_IDs[edge_list_ID[j].y].mPos = direction[corner_now][p.x] + corner_IDs[corner_now].mPos;
                             matrix_with_ID[corner_IDs[edge_list_ID[j].y].mLabel][corner_IDs[edge_list_ID[j].y].mPos.x][corner_IDs[edge_list_ID[j].y].mPos.y] = edge_list_ID[j].y;
 
                             direction[edge_list_ID[j].y][p.y] = -direction[corner_now][p.x];
                             direction[edge_list_ID[j].y][(p.y + 2) % 4] = -direction[edge_list_ID[j].y][p.y];
-                            if (cornerPoints[edge_list_ID[j].y].angle_black_edge < cornerPoints[edge_list_ID[j].y].angle_white_edge) {
+                            if (cornerPoints[edge_list_ID[j].y].angle_black_edge > cornerPoints[edge_list_ID[j].y].angle_white_edge) {
                                 direction[edge_list_ID[j].y][(p.y + 1) % 4] = Point(direction[edge_list_ID[j].y][p.y].y, -direction[edge_list_ID[j].y][p.y].x);
                             }
                             else {
@@ -161,7 +161,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
         std::stringstream ss;
         ss << '(' << corner_IDs[i].mPos.x << ", " << corner_IDs[i].mPos.y << ')';
         string s = ss.str();
-        putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.35, Scalar(0, 255, 0), 1.5);
+        putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
     }
     imshow("Organization", imgMark);
     waitKey(0);
@@ -198,7 +198,7 @@ inline Point ArrayOrganization::directionJudge(float angle, cornerInformation co
 }
 
 inline bool ArrayOrganization::angleJudge(float angle1, float angle2) {
-    if ((angle1 - angle2) < maxCornerAngle)
+    if (abs(angle1 - angle2) < maxCornerAngleInOrg)
         return true;
     else
         return false;
