@@ -8,7 +8,7 @@ inline bool cmp(const Point& a, const Point& b)
     return a.x < b.x;
 }
 
-void ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints){
+int *ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints){
    	Rect rect(0, 0, img.cols, img.rows);
     Subdiv2D subdiv(rect);
 
@@ -53,6 +53,8 @@ void ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
     }
     removeWrongEdges(img, cornerPoints);
     organizeCornersIntoArrays(img, cornerPoints);
+
+    return &(matrix_with_ID[0][0][0]);
 }
 
 void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints){
@@ -159,7 +161,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
     }
     for (int i = 0; i < cornerPoints.size(); i++) {
         std::stringstream ss;
-        ss << '(' << corner_IDs[i].mPos.x << ", " << corner_IDs[i].mPos.y << ')';
+        ss << '(' << corner_IDs[i].mLabel << ", " << corner_IDs[i].mPos.y << ')';
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
     }

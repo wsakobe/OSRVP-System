@@ -17,7 +17,7 @@ struct matrixInform
 class ArrayOrganization {
 public:
 	vector<matrixInform> matrix_array_pos;
-	void delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints);
+	int *delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints);
 	void removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints);
 	void organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints);
 

@@ -158,6 +158,7 @@
   <ItemGroup>
     <ClInclude Include="include\corner_array_organization.h" />
     <ClInclude Include="include\final_election.h" />
+    <ClInclude Include="include\identify_marker.h" />
     <ClInclude Include="include\pre-filter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

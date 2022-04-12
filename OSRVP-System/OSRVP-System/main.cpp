@@ -1,4 +1,4 @@
-#include "include/corner_array_organization.h"
+#include "include/identify_marker.h"
 
 using namespace cv;
 using namespace std;
@@ -14,8 +14,13 @@ const int number_of_corner_y = 10;
 vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
 
+int model_3D[number_of_corner_x * number_of_corner_y][3];
+
+void initModel3D();
+
 int main(int argc, char* argv[]) {
     double start_time, end_time;
+    initModel3D();
     for (int i = 0; i < 1; i++) {
         //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         Mat image = imread(".\\Data\\1.jpg");
@@ -34,7 +39,10 @@ int main(int argc, char* argv[]) {
         cornerPoints = fE.finalElection(image_gray, candidate_corners);
 
         ArrayOrganization arrayOrg;
-        arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+        int *matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+
+        IdentifyMarker identify;
+        identify.identifyMarker(image_gray, matrix_p, model_3D);
 
         //end_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         //cout << "FInal-election:" << (end_time - start_time) << endl;
@@ -43,4 +51,8 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
+}
+
+void initModel3D() {
+
 }
