@@ -34,7 +34,7 @@ private:
 	float edgeDistance2(Point2f a, Point2f b);
 	float edgeAngle2(Point2f a, Point2f b);
 	Point directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2);
-	bool angleJudge(float angle1, float angle2);
+	bool  angleJudge(float angle1, float angle2);
 
 	const float maxCornerDistance = 50.0, maxCornerAngle = 15.0, maxCornerAngleInOrg = 25.0;
 	float edge_angle, angle_oppo;
