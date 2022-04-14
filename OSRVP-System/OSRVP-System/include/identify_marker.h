@@ -25,14 +25,19 @@ private:
 	bool checkLattice(int label, int x, int y);
 	bool checkGrid3(int label, int x, int y);
 	int  extractMatrixValue(int label, int x, int y);
-	float recoveryMatrixRatio(int label, int value);
-	vector<corner_pos_with_ID> identifyMarkerPosRANSAC();
-	void countCornerPosWithID(int label);
+	float recoveryMatrixRatio(int label, int x, int y, int value);
+	vector<corner_pos_with_ID> identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints);
+	void countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints);
+	void init(int* p, struct valueMatrix* vm, int(*d)[10]);
 
 	bool isEnd;
 	float pixel_center, ave_pixel_around, T_pixel = 0.25;
-	int matrix_with_ID[5][2 * 10][2 * 10], dot_recovery[5][2 * 10][2 * 10];
-	int matrix_value;
+	int matrix_with_ID[5][2 * 10][2 * 10], dot_recovery[5][2 * 10][2 * 10], dot_matrix[2 * 10][2 * 10];
+	int matrix_value, number_all, number_succ;
+
+	struct valueMatrix value_matrix[1025];
+
+	int bias[4][4] = { 1, 0, 0, 1,  0, -1, 1, 0,  -1, 0, 0, -1,  0, 1, -1, 0 };
 };
 
 #endif

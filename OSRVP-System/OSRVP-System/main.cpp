@@ -9,8 +9,10 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 1.0, 0, 0,
                                                     0, 0, 1);
 const Mat DistCoeffLeft = (Mat_<double>(1, 5) << 0, 0, 0, 0, 0);
 
-const int number_of_corner_x = 10;
-const int number_of_corner_y = 10;
+const int number_of_corner_x = 20;
+const int number_of_corner_y = 20;
+
+int number_of_corner_x_input, number_of_corner_y_input;
 
 vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
@@ -89,6 +91,7 @@ void initModel() {
     }
 
     Files.open(dotMarixName);
+    Files >> number_of_corner_x_input >> number_of_corner_y_input;
     if (!Files.is_open())
     {
         cout << "Cannot load dotMatrix.txt£¡" << endl;
