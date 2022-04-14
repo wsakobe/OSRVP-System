@@ -23,7 +23,7 @@ public:
 
 	vector<Point> edge_list_ID;
 	
-	int matrix_with_ID[5][2 * 10][2 * 10]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
+	int matrix_with_ID[5][2 * 20][2 * 20]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
 
 private:
 	Subdiv2D subdiv_delaunay;
@@ -40,7 +40,7 @@ private:
 	float edge_angle, angle_oppo;
 	float dist_now, dist_min = 1000.0;
 
-	bool selection[8 * 100], corner_visited[100];
+	bool selection[8 * 300], corner_visited[300];
 
 	int org_ID, dst_ID, last_ID, last_ID_pos;
 	int start_corner, end_corner;

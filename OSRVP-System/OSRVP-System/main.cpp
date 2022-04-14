@@ -18,7 +18,8 @@ vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
 vector<corner_pos_with_ID> corner_pos_ID;
 static valueMatrix value_matrix[1025];
-static int model_3D[number_of_corner_x * number_of_corner_y][3], dot_matrix[number_of_corner_x][number_of_corner_y];
+static float model_3D[number_of_corner_x * number_of_corner_y][3];
+static int dot_matrix[number_of_corner_x][number_of_corner_y];
 imageParams ImgParams;
 
 Mat image, image_gray;
@@ -26,32 +27,26 @@ Mat image, image_gray;
 void initModel();
 
 int main(int argc, char* argv[]) {
-   // double start_time, end_time;
     initModel();
     for (int i = 0; i < 1; i++) {
-        //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         image = imread(".\\Data\\1.jpg");
-        
         cvtColor(image, image_gray, COLOR_BGR2GRAY);
-        image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1./255;
-                
-        ImgParams.height = image.rows;
-        ImgParams.width = image.cols;
+        image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
+
+        ImgParams.height = image_gray.rows;
+        ImgParams.width = image_gray.cols;
 
         PreFilter pF;
-        candidate_corners = pF.preFilter(image_gray, 2 * number_of_corner_x * number_of_corner_y);
+        candidate_corners = pF.preFilter(image_gray, number_of_corner_x * number_of_corner_y / 2);
 
         FinalElection fE;
         cornerPoints = fE.finalElection(image_gray, candidate_corners);
 
         ArrayOrganization arrayOrg;
-        int *matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+        int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
 
         IdentifyMarker identify;
         corner_pos_ID = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
-
-        //end_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        //cout << "FInal-election:" << (end_time - start_time) << endl;
     }
 
     return 0;
@@ -70,9 +65,9 @@ void initModel() {
         cout << "Cannot load Model3D.txt£¡" << endl;
         return;
     }
-    int fileLength = 0;
-    Files >> fileLength;
-    for (int i = 0; i < fileLength; i++) {
+    int i;
+    while(!Files.eof()) {
+        Files >> i;
         Files >> model_3D[i][0] >> model_3D[i][1] >> model_3D[i][2];
     }
 
@@ -82,10 +77,8 @@ void initModel() {
         cout << "Cannot load valueMatrix.txt£¡" << endl;
         return;
     }
-    fileLength = 0;
     int value;
-    Files >> fileLength;
-    for (int i = 0; i < fileLength; i++) {
+    while (!Files.eof()) {
         Files >> value;
         Files >> value_matrix[value].pos.x >> value_matrix[value].pos.y >> value_matrix[value].dir;
     }
