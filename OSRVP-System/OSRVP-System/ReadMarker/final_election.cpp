@@ -211,8 +211,8 @@ void FinalElection::templateMatching(Mat& img) {
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
     }
 
-    imshow("imgMark", imgMark);
-    waitKey(0);
+    //imshow("imgMark", imgMark);
+    //waitKey(0);
 
     return;
 }

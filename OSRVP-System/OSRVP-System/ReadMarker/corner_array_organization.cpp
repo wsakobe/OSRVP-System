@@ -98,8 +98,8 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
     for (int i = 0; i < edge_list_ID.size(); i++)
         line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
 
-    imshow("Delaunay", imgMark);
-    waitKey(0);
+    //imshow("Delaunay", imgMark);
+    //waitKey(0);
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){

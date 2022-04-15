@@ -5,6 +5,9 @@ using namespace cv;
 
 vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[20])
 {
+	Mat imgMark(img.rows, img.cols, CV_32FC3);
+	cvtColor(img, imgMark, COLOR_GRAY2RGB);
+
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 	init(p, vm, d);
 	for (int i = 0; i < 5; i++) {
@@ -34,6 +37,17 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}	
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints);
+
+	for (int i = 0; i < corner_pos_ID.size(); i++) {
+		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
+		std::stringstream ss;
+		ss << corner_pos_ID[i].ID;
+		string s = ss.str();
+		putText(imgMark, s, corner_pos_ID[i].subpixel_pos + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
+	}
+	imshow("Identify", imgMark);
+	waitKey(0);
+
 	return corner_pos_ID;
 }
 
@@ -71,7 +85,7 @@ float IdentifyMarker::recoveryMatrixRatio(int label, int x, int y, int value)
 		for (int k = 0; k < 2 * 20; k++)
 			if (dot_recovery[label][j][k] != -1) {
 				number_all++;
-				if (dot_recovery[label][j][k] == dot_matrix[value_matrix[value].pos.x + bias[value_matrix[value].dir][0] * (j - x) + bias[value_matrix[value].dir][1] * (k - y)][value_matrix[value].pos.y + bias[value_matrix[value].dir][2] * (j - x) + bias[value_matrix[value].dir][3] * (k - y)]) 
+				if (dot_recovery[label][j][k] == dot_matrix[value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y) + bias[value_matrix[value].dir][0]][value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + bias[value_matrix[value].dir][1]])
 					number_succ++;
 			}
 	return number_succ / number_all;
@@ -101,12 +115,13 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<corner
 
 void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints)
 {
+	extern int number_of_corner_x_input, number_of_corner_y_input;
 	corner_pos_with_ID corner_temp;
 	for (int j = 0; j < 2 * 20; j++)
 		for (int k = 0; k < 2 * 20; k++) {
 			if (matrix_with_ID[label][j][k] != -1) {
 				corner_temp.label = label;
-				corner_temp.ID = (value_matrix[value].pos.x + bias[value_matrix[value].dir][0] * (j - x) + bias[value_matrix[value].dir][1] * (k - y)) * 10 + value_matrix[value].pos.y + bias[value_matrix[value].dir][2] * (j - x) + bias[value_matrix[value].dir][3] * (k - y);
+				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y);
 				corner_temp.subpixel_pos = cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel;
 				corner_pos_ID.push_back(corner_temp);
 			}			
