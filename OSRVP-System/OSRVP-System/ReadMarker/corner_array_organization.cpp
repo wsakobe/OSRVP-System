@@ -58,8 +58,8 @@ int *ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
 }
 
 void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints){
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     memset(selection, true, sizeof(selection));
 
@@ -95,16 +95,16 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
             it++;
     }
 
-    for (int i = 0; i < edge_list_ID.size(); i++)
-        line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
+    //for (int i = 0; i < edge_list_ID.size(); i++)
+    //    line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
 
     //imshow("Delaunay", imgMark);
     //waitKey(0);
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     int matrix_number = 0;
     vector<matrixInform> corner_IDs(cornerPoints.size());
@@ -159,14 +159,15 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
             matrix_number++;
         }
     }
+    /*
     for (int i = 0; i < cornerPoints.size(); i++) {
         std::stringstream ss;
         ss << '(' << corner_IDs[i].mPos.x << ", " << corner_IDs[i].mPos.y << ')';
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
-    }
-    imshow("Organization", imgMark);
-    waitKey(0);
+    }*/
+    //imshow("Organization", imgMark);
+    //waitKey(0);
 }
 
 inline float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {

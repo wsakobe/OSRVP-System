@@ -163,8 +163,8 @@ void FinalElection::fitQuadraticSurface(Mat& img) {
 }
 
 void FinalElection::templateMatching(Mat& img) {
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     for (int i = 0; i < cornerPoints.size(); i++) {
         //edge_angle = cornerPoints[i].angle_black_edge - cornerPoints[i].angle_white_edge;
@@ -201,7 +201,7 @@ void FinalElection::templateMatching(Mat& img) {
         else
             it++;
     }
-
+    /*
     for (int i = 0; i < cornerPoints.size(); i++) {
         circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
         std::stringstream ss;
@@ -209,7 +209,7 @@ void FinalElection::templateMatching(Mat& img) {
         ss << i;
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
-    }
+    }*/
 
     //imshow("imgMark", imgMark);
     //waitKey(0);

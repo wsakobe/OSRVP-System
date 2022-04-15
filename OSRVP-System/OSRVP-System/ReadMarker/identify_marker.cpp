@@ -5,8 +5,8 @@ using namespace cv;
 
 vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[20])
 {
-	Mat imgMark(img.rows, img.cols, CV_32FC3);
-	cvtColor(img, imgMark, COLOR_GRAY2RGB);
+	//Mat imgMark(img.rows, img.cols, CV_32FC3);
+	//cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 	init(p, vm, d);
@@ -38,6 +38,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints);
 
+	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
 		std::stringstream ss;
@@ -47,7 +48,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}
 	imshow("Identify", imgMark);
 	waitKey(0);
-
+	*/
 	return corner_pos_ID;
 }
 
@@ -121,7 +122,7 @@ void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, ve
 		for (int k = 0; k < 2 * 20; k++) {
 			if (matrix_with_ID[label][j][k] != -1) {
 				corner_temp.label = label;
-				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y);
+				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + 1;
 				corner_temp.subpixel_pos = cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel;
 				corner_pos_ID.push_back(corner_temp);
 			}			

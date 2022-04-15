@@ -139,6 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\pose_estimation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ReadMarker\corner_array_organization.cpp" />
     <ClCompile Include="ReadMarker\final_election.cpp" />
@@ -159,6 +161,7 @@
     <ClInclude Include="include\corner_array_organization.h" />
     <ClInclude Include="include\final_election.h" />
     <ClInclude Include="include\identify_marker.h" />
+    <ClInclude Include="include\pose_estimation.h" />
     <ClInclude Include="include\pre-filter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

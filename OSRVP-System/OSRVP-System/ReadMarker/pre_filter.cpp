@@ -3,8 +3,8 @@
 using namespace std;
 
 vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     GaussianBlur(img, img_blur, Size(kernal_size, kernal_size), sigma);
     Scharr(img_blur, Gx, CV_32FC1, 1, 0);
@@ -35,11 +35,11 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
                 temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j] / 200;
                 corners.push_back(temporal_corner);
 
-                circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
-                std::stringstream ss;
-                ss << std::setprecision(4) << G_score_after_NMS.ptr<float>(i)[j];
-                string s = ss.str();
-                putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
+                //circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
+                //std::stringstream ss;
+                //ss << std::setprecision(4) << G_score_after_NMS.ptr<float>(i)[j];
+                //string s = ss.str();
+                //putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
             }
         }	
     //imshow("imgMark", imgMark);

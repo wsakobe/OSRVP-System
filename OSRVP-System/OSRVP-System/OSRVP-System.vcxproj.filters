@@ -30,6 +30,9 @@
     <ClCompile Include="ReadMarker\identify_marker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="include\pose_estimation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\pre-filter.h">
@@ -42,6 +45,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\identify_marker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pose_estimation.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

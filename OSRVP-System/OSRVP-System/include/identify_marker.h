@@ -31,7 +31,7 @@ private:
 	void init(int* p, struct valueMatrix* vm, int(*d)[20]);
 
 	bool isEnd;
-	float pixel_center, ave_pixel_around, T_pixel = 0.25;
+	float pixel_center, ave_pixel_around, T_pixel = 0.2;
 	int matrix_with_ID[5][2 * 20][2 * 20], dot_recovery[5][2 * 20][2 * 20], dot_matrix[2 * 20][2 * 20];
 	int matrix_value, number_all, number_succ;
 
