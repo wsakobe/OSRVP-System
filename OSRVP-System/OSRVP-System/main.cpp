@@ -56,6 +56,10 @@ int main(int argc, char* argv[]) {
             cout << "Not enough corners!" << endl;
             continue;
         }
+        if (corner_pos_ID_left.size() == 48) {
+            cout << "Not enough corners!" << endl;
+            //continue;
+        }
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
 
