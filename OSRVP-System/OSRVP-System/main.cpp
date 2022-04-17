@@ -5,13 +5,13 @@
 using namespace cv;
 using namespace std;
 
-const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 2163.71285741499, 0, 970.313100651262,
-    0, 2163.49488941408, 568.675128505328,
+const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 2185.86372107324, 0, 952.022350099373,
+    0, 2186.58735329496, 563.875348654881,
     0, 0, 1);
-const Mat DistCoeffLeft = (Mat_<double>(5, 1) << -0.173330511222436, 0.229538053301319, 0, 0, 0);
+const Mat DistCoeffLeft = (Mat_<double>(5, 1) << -0.170085848625626, 0.203029010848620, 0, 0, 0);
 
-const int number_of_corner_x = 20;
-const int number_of_corner_y = 20;
+const int number_of_corner_x = 30;
+const int number_of_corner_y = 30;
 
 int number_of_corner_x_input, number_of_corner_y_input;
 
@@ -25,31 +25,46 @@ imageParams ImgParams;
 PoseInformation Pose;
 
 Mat image, image1, image_gray;
+vector<Point3f> axesPoints;
+vector<Point2f> imagePoints;
 
 void initModel();
 vector<corner_pos_with_ID> readMarker(Mat& image);
-
+void plotModel(Mat& image, PoseInformation Pose);
 
 int main(int argc, char* argv[]) {
     initModel();
     int start_time, last_time = 0;
-    for (int i = 0; i < 100; i++) {
+    VideoCapture capture;
+
+    image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
+    if (!capture.isOpened())
+    {
+        printf("can not open ...\n");
+        return -1;
+    }
+    while (capture.read(image)) {
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << i << ' ' << 1000.0 / (start_time - last_time) << endl;
-        image = imread(".\\Data\\1.bmp");
-        image1 = image.clone();
+        cout << 1000.0 / (start_time - last_time) << endl;
+
         //Rect roi(900, 400, 1000, 600);
         //image = image(roi).clone();
 
         corner_pos_ID_left = readMarker(image);
-        corner_pos_ID_right = readMarker(image1);
-
+        cout << corner_pos_ID_left.size() << endl;
+        if (corner_pos_ID_left.size() < 4) {
+            cout << "Not enough corners!" << endl;
+            continue;
+        }
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
+
+        plotModel(image, Pose);
 
         last_time = start_time;
     }
 
+    destroyAllWindows();
     return 0;
 }
 
@@ -118,4 +133,56 @@ void initModel() {
     for (int i = 0; i < number_of_corner_x_input; i++)
         for (int j = 0; j < number_of_corner_y_input; j++)
             Files >> dot_matrix[i][j];
+}
+
+void plotModel(Mat& image, PoseInformation Pose) {
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 1; i < 193; i++)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    for (int i = 0; i < axesPoints.size() - 1; i++) {
+        //line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
+        circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+    }
+    /*
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 127; i < 134; i++)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    for (int i = 0; i < axesPoints.size() - 1; i++) {
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
+        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+    }
+
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 1; i < 128; i += 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    for (int i = 0; i < axesPoints.size() - 1; i++) {
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
+        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+    }
+
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 7; i < 134; i += 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    for (int i = 0; i < axesPoints.size() - 1; i++) {
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
+        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+    }
+    */
+    //»æÖÆÄ©¶ËÖ´ÐÐÆ÷Î»×Ë
+    axesPoints.clear();
+    for (int i = 0; i < Pose.tracking_points.size(); i++)
+        axesPoints.push_back(Pose.tracking_points[i]);
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
+
+    imshow("image_pose_pnp", image);
+    waitKey(5);
 }

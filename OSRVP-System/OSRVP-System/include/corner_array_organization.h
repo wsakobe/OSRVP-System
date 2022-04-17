@@ -23,7 +23,7 @@ public:
 
 	vector<Point> edge_list_ID;
 	
-	int matrix_with_ID[5][2 * 20][2 * 20]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
+	int matrix_with_ID[5][2 * 30][2 * 30]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
 
 private:
 	Subdiv2D subdiv_delaunay;

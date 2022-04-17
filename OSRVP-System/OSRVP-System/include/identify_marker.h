@@ -18,7 +18,7 @@ class OrganizationArray;
 
 class IdentifyMarker {
 public:
-	vector<corner_pos_with_ID> identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *value_matrix, int (*dot_matrix)[20]);
+	vector<corner_pos_with_ID> identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *value_matrix, int (*dot_matrix)[30]);
 	vector<corner_pos_with_ID> corner_pos_ID;
 
 private:
@@ -26,13 +26,13 @@ private:
 	bool checkGrid3(int label, int x, int y);
 	int  extractMatrixValue(int label, int x, int y);
 	float recoveryMatrixRatio(int label, int x, int y, int value);
-	vector<corner_pos_with_ID> identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints);
+	vector<corner_pos_with_ID> identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints, float threshold);
 	void countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints);
-	void init(int* p, struct valueMatrix* vm, int(*d)[20]);
+	void init(int* p, struct valueMatrix* vm, int(*d)[30]);
 
 	bool isEnd;
 	float pixel_center, ave_pixel_around, T_pixel = 0.2;
-	int matrix_with_ID[5][2 * 20][2 * 20], dot_recovery[5][2 * 20][2 * 20], dot_matrix[2 * 20][2 * 20];
+	int matrix_with_ID[5][2 * 30][2 * 30], dot_recovery[5][2 * 30][2 * 30], dot_matrix[2 * 30][2 * 30];
 	int matrix_value, number_all, number_succ;
 
 	struct valueMatrix value_matrix[1025];
