@@ -10,9 +10,6 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 2185.86372107324, 0, 952.022
     0, 0, 1);
 const Mat DistCoeffLeft = (Mat_<double>(5, 1) << -0.170085848625626, 0.203029010848620, 0, 0, 0);
 
-const int number_of_corner_x = 30;
-const int number_of_corner_y = 30;
-
 int number_of_corner_x_input, number_of_corner_y_input;
 
 vector<cornerPreInfo> candidate_corners;
@@ -54,11 +51,9 @@ int main(int argc, char* argv[]) {
         cout << corner_pos_ID_left.size() << endl;
         if (corner_pos_ID_left.size() < 4) {
             cout << "Not enough corners!" << endl;
+            imshow("image_pose_pnp", image);
+            waitKey(1);
             continue;
-        }
-        if (corner_pos_ID_left.size() == 48) {
-            cout << "Not enough corners!" << endl;
-            //continue;
         }
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
@@ -142,44 +137,44 @@ void initModel() {
 void plotModel(Mat& image, PoseInformation Pose) {
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 1; i < 193; i++)
+    for (int i = 66; i < 71; i++)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
     for (int i = 0; i < axesPoints.size() - 1; i++) {
-        //line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
-        circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 200), 3);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
-    /*
+    
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 127; i < 134; i++)
+    for (int i = 70; i < 134; i += 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
     for (int i = 0; i < axesPoints.size() - 1; i++) {
-        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
-        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 200), 3);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
     }
 
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 1; i < 128; i += 7)
+    for (int i = 66; i < 130; i += 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
     for (int i = 0; i < axesPoints.size() - 1; i++) {
-        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
-        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 200), 3);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
     }
 
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 7; i < 134; i += 7)
+    for (int i = 129; i < 134; i++)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
     for (int i = 0; i < axesPoints.size() - 1; i++) {
         line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 0), 2);
-        circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255));
     }
-    */
+    
     //»æÖÆÄ©¶ËÖ´ÐÐÆ÷Î»×Ë
     axesPoints.clear();
     for (int i = 0; i < Pose.tracking_points.size(); i++)
@@ -188,5 +183,5 @@ void plotModel(Mat& image, PoseInformation Pose) {
     circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
 
     imshow("image_pose_pnp", image);
-    waitKey(5);
+    waitKey(1);
 }

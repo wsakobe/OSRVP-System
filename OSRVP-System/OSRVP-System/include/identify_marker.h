@@ -32,7 +32,7 @@ private:
 
 	bool isEnd;
 	float pixel_center, ave_pixel_around, T_pixel = 0.25;
-	int matrix_with_ID[5][2 * 30][2 * 30], dot_recovery[5][2 * 30][2 * 30], dot_matrix[2 * 30][2 * 30];
+	int matrix_with_ID[5][2 * number_of_corner_x][2 * number_of_corner_y], dot_recovery[5][2 * number_of_corner_x][2 * number_of_corner_y], dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
 	int matrix_value, number_all, number_succ;
 
 	struct valueMatrix value_matrix[1025];

@@ -9,6 +9,9 @@
 #include <vector>
 #include <iostream> 
 
+#define number_of_corner_x 30
+#define number_of_corner_y 30
+
 using namespace std;
 using namespace cv;
 

@@ -13,8 +13,8 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	init(p, vm, d);
 	for (int i = 0; i < 5; i++) {
 		isEnd = true;
-		for (int j = 0; j < 2 * 30; j++)
-			for (int k = 0; k < 2 * 30; k++) {
+		for (int j = 0; j < 2 * number_of_corner_x; j++)
+			for (int k = 0; k < 2 * number_of_corner_y; k++) {
 				if (matrix_with_ID[i][j][k] != -1) {
 					isEnd = false;
 					if (checkLattice(i, j, k)) {
@@ -83,8 +83,8 @@ float IdentifyMarker::recoveryMatrixRatio(int label, int x, int y, int value)
 {
 	number_all  = 0;
 	number_succ = 0;
-	for (int j = 0; j < 2 * 30; j++)
-		for (int k = 0; k < 2 * 30; k++)
+	for (int j = 0; j < 2 * number_of_corner_x; j++)
+		for (int k = 0; k < 2 * number_of_corner_y; k++)
 			if (dot_recovery[label][j][k] != -1) {
 				number_all++;
 				if (dot_recovery[label][j][k] == dot_matrix[value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y) + bias[value_matrix[value].dir][0]][value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + bias[value_matrix[value].dir][1]])
@@ -97,16 +97,16 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<corner
 {
 	for (int i = 0; i < 5; i++) {
 		isEnd = true;
-		for (int j = 0; j < 2 * 30; j++)
-			for (int k = 0; k < 2 * 30; k++) {
+		for (int j = 0; j < 2 * number_of_corner_x; j++)
+			for (int k = 0; k < 2 * number_of_corner_y; k++) {
 				if (dot_recovery[i][j][k] != -1) {
 					isEnd = false;
 					if (checkGrid3(i, j, k)) {
 						matrix_value = extractMatrixValue(i, j, k);
 						if (recoveryMatrixRatio(i, j, k, matrix_value) > threshold) {
 							countCornerPosWithID(i, j, k, matrix_value, cornerPoints);
-							j = 2 * 30;
-							k = 2 * 30; //break two fors
+							j = 2 * number_of_corner_x;
+							k = 2 * number_of_corner_y; //break two fors
 						}
 					}
 				}
@@ -120,8 +120,8 @@ void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, ve
 {
 	extern int number_of_corner_x_input, number_of_corner_y_input;
 	corner_pos_with_ID corner_temp;
-	for (int j = 0; j < 2 * 30; j++)
-		for (int k = 0; k < 2 * 30; k++) {
+	for (int j = 0; j < 2 * number_of_corner_x; j++)
+		for (int k = 0; k < 2 * number_of_corner_y; k++) {
 			if (matrix_with_ID[label][j][k] != -1) {
 				corner_temp.label = label;
 				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + 1;
@@ -136,12 +136,12 @@ void IdentifyMarker::init(int* p, struct valueMatrix* vm, int(*d)[30])
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 
 	for (int i = 0; i < 5; i++)
-		for (int j = 0; j < 2 * 30; j++)
-			for (int k = 0; k < 2 * 30; k++)
-				matrix_with_ID[i][j][k] = *(p + i * 2 * 30 * 2 * 30 + j * 2 * 30 + k);
+		for (int j = 0; j < 2 * number_of_corner_x; j++)
+			for (int k = 0; k < 2 * number_of_corner_y; k++)
+				matrix_with_ID[i][j][k] = *(p + i * 2 * number_of_corner_x * 2 * number_of_corner_x + j * 2 * number_of_corner_y + k);
 	
-	for (int i = 0; i < 2 * 30; i++)
-		for (int j = 0; j < 2 * 30; j++)
+	for (int i = 0; i < 2 * number_of_corner_x; i++)
+		for (int j = 0; j < 2 * number_of_corner_y; j++)
 			dot_matrix[i][j] = d[i][j];
 	
 	for (int i = 0; i < 1025; i++)
