@@ -31,7 +31,7 @@ void plotModel(Mat& image, PoseInformation Pose);
 
 int main(int argc, char* argv[]) {
     initModel();
-    int start_time, last_time = 0;
+    int start_time, last_time = 0, middle_time, middle_time1;
     VideoCapture capture;
 
     image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
@@ -42,22 +42,26 @@ int main(int argc, char* argv[]) {
     }
     while (capture.read(image)) {
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << 1000.0 / (start_time - last_time) << endl;
+        //cout << 1000.0 / (start_time - last_time) << endl;
 
         //Rect roi(900, 400, 1000, 600);
         //image = image(roi).clone();
 
         corner_pos_ID_left = readMarker(image);
-        cout << corner_pos_ID_left.size() << endl;
+
+        middle_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        
+        //cout << corner_pos_ID_left.size() << endl;
         if (corner_pos_ID_left.size() < 4) {
             cout << "Not enough corners!" << endl;
             imshow("image_pose_pnp", image);
             waitKey(1);
             continue;
         }
+
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
-
+        
         plotModel(image, Pose);
 
         last_time = start_time;

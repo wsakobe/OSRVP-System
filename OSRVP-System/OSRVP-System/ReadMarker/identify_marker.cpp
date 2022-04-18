@@ -37,7 +37,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 		if (isEnd) break;
 	}	
 	
-	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.95);
+	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.9);
 
 	
 	for (int i = 0; i < corner_pos_ID.size(); i++) {

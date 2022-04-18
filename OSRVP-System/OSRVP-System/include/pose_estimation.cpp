@@ -53,14 +53,24 @@ PoseInformation PoseEstimation::poseEstimationMono(vector<corner_pos_with_ID> co
 		world_points.push_back(Point3f(model_3D[corner_set[i].ID][0], model_3D[corner_set[i].ID][1], model_3D[corner_set[i].ID][2]));
 		image_points.push_back(corner_set[i].subpixel_pos);
 	}
-	solvePnP(world_points, image_points, IntrinsicCam, DistCoeff, rvec, tvec, false, SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, IntrinsicCam, DistCoeff, rvec, tvec, false, 100, 0.5, 0.99, noArray(), SOLVEPNP_EPNP);
 	Rodrigues(rvec, R);
+	//cout << R << endl;
 
-	cout << R << endl;
+	Mat end_effector = (Mat_<double>(3, 1) << 29.9093, 212.3799, 369);
+	end_effector = R * end_effector + tvec;
 
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
-	Pose6D.tracking_points.push_back(Point3f(0, 0, 0));
+	Pose6D.tracking_points.push_back(Point3d(end_effector.at<double>(0, 0), end_effector.at<double>(1, 0), end_effector.at<double>(2, 0)));
+
+	vector<Point2f> imagePoints;
+	projectPoints(world_points, rvec, tvec, IntrinsicCam, DistCoeff, imagePoints);
+
+	float reprojection_error = 0;
+	for (int i = 0; i < imagePoints.size(); i++)
+		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
+	cout << reprojection_error / imagePoints.size() << endl;
 
 	return Pose6D;
 }
