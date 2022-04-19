@@ -12,11 +12,9 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	corner_pos_ID.clear();
 	init(p, vm, d);
 	for (int i = 0; i < 5; i++) {
-		isEnd = true;
 		for (int j = 0; j < 2 * number_of_corner_x; j++)
 			for (int k = 0; k < 2 * number_of_corner_y; k++) {
 				if (matrix_with_ID[i][j][k] != -1) {
-					isEnd = false;
 					if (checkLattice(i, j, k)) {
 						Point2f center_location = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel) / 4;
 						Point2f left_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.15) / 2;
@@ -40,7 +38,6 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 					}
 				}
 			}
-		if (isEnd) break;
 	}	
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.85);
@@ -54,7 +51,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 		putText(imgMark, s, corner_pos_ID[i].subpixel_pos + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
 	}
 	imshow("Identify", imgMark);
-	waitKey(1);
+	waitKey(0);
 	*/
 	return corner_pos_ID;
 }
@@ -102,11 +99,9 @@ float IdentifyMarker::recoveryMatrixRatio(int label, int x, int y, int value)
 vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints, float threshold)
 {
 	for (int i = 0; i < 5; i++) {
-		isEnd = true;
 		for (int j = 0; j < 2 * number_of_corner_x; j++)
 			for (int k = 0; k < 2 * number_of_corner_y; k++) {
 				if (dot_recovery[i][j][k] != -1) {
-					isEnd = false;
 					if (checkGrid3(i, j, k)) {
 						matrix_value = extractMatrixValue(i, j, k);
 						if (recoveryMatrixRatio(i, j, k, matrix_value) > threshold) {
@@ -117,7 +112,6 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<corner
 					}
 				}
 			}
-		if (isEnd) break;
 	}
 	return corner_pos_ID;
 }

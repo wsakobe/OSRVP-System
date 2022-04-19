@@ -35,6 +35,7 @@ public:
 private:
 	vector<cornerPreInfo> corners;
 	cornerPreInfo temporal_corner;
+	float G_filtermin, G_filtermax;
 };
 
 #endif // INCLUDE_PRE_FILTER_H_

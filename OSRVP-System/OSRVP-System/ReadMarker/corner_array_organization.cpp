@@ -69,20 +69,25 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
     last_ID_pos = 0;
     dist_min = edgeDistance2(cornerPoints[edge_list_ID[0].x].point_in_subpixel, cornerPoints[edge_list_ID[0].y].point_in_subpixel);
 
-    for (int i = 1; i < edge_list_ID.size(); i++)
+    for (int i = 0; i < edge_list_ID.size() - 1; i++)
     {
-        if (edge_list_ID[i].x == last_ID) {
+        if (edge_list_ID[i + 1].x == last_ID) {
             dist_now = edgeDistance2(cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel);
             if (dist_now < dist_min)
                 dist_min = dist_now;
         }
         else {
-            for (int j = last_ID_pos; j < i; j++)
-                if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 1.5 * dist_min)
+            for (int j = last_ID_pos; j <= i; j++)
+                if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 2 * dist_min) {
                     selection[j] = false;
+                    for (int k = 0; k < edge_list_ID.size(); k++)
+                        if ((edge_list_ID[k].y == edge_list_ID[j].x) && (edge_list_ID[k].x == edge_list_ID[j].y))
+                            selection[k] = false;
+                }
+                    
             if (i != edge_list_ID.size() - 1) {
-                last_ID = edge_list_ID[i].x;
-                last_ID_pos = i;
+                last_ID = edge_list_ID[i + 1].x;
+                last_ID_pos = i + 1;
                 dist_min = MAX_DISTANCE;
             }            
         }
@@ -96,12 +101,12 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
         else
             it++;
     }
+    /*
+    for (int i = 0; i < edge_list_ID.size(); i++)
+        line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
 
-    //for (int i = 0; i < edge_list_ID.size(); i++)
-    //    line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
-
-    //imshow("Delaunay", imgMark);
-    //waitKey(1);
+    imshow("Delaunay", imgMark);
+    waitKey(0);*/
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
@@ -166,6 +171,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
         }
     }
     
+    /*
     for (int i = 0; i < cornerPoints.size(); i++) {
         std::stringstream ss;
         ss << '(' << corner_IDs[i].mPos.x << ", " << corner_IDs[i].mPos.y << ')';
@@ -173,8 +179,8 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
     }
 
-    //imshow("Organization", imgMark);
-    //waitKey(1);
+    imshow("Organization", imgMark);
+    waitKey(0);*/
 }
 
 inline float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {

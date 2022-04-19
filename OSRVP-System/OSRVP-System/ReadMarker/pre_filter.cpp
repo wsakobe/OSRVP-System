@@ -25,14 +25,17 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     G_score_after_NMS.copyTo(score_sequence);
     score_sequence = score_sequence.reshape(1, img_blur.cols * img_blur.rows);
     cv::sort(score_sequence, score_sequence, SORT_EVERY_COLUMN + SORT_DESCENDING);
-    float G_filtermin = score_sequence.ptr<float>(number)[1];
+
+    G_filtermax = score_sequence.ptr<float>(0)[1];
+    G_filtermin = score_sequence.ptr<float>(number)[1];
+
     for (int i = maskR; i < img_blur.rows - maskR; i++)
         for (int j = maskR; j < img_blur.cols - maskR; j++) {
     		if (G_score_after_NMS.ptr<float>(i)[j] < G_filtermin)
                 G_score_after_NMS.ptr<float>(i)[j] = 0;
             else {
                 temporal_corner.corner_position = Point(j ,i);
-                temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j] / 200;
+                temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j] / G_filtermax;
                 corners.push_back(temporal_corner);
 
                 //circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
