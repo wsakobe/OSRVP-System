@@ -58,8 +58,8 @@ int *ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
 }
 
 void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints){
-    //Mat imgMark(img.rows, img.cols, CV_32FC3);
-    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     memset(selection, true, sizeof(selection));
 
@@ -81,8 +81,8 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
                 if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 1.5 * dist_min)
                     selection[j] = false;
             if (i != edge_list_ID.size() - 1) {
-                last_ID = edge_list_ID[i + 1].x;
-                last_ID_pos = i + 1;
+                last_ID = edge_list_ID[i].x;
+                last_ID_pos = i;
                 dist_min = MAX_DISTANCE;
             }            
         }
@@ -101,12 +101,12 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
     //    line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
 
     //imshow("Delaunay", imgMark);
-    //waitKey(0);
+    //waitKey(1);
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
-    //Mat imgMark(img.rows, img.cols, CV_32FC3);
-    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     int matrix_number = 0;
     vector<matrixInform> corner_IDs(cornerPoints.size());
@@ -121,7 +121,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
             q.push(edge_list_ID[i].x);
             corner_visited[edge_list_ID[i].x] = true;
             corner_IDs[edge_list_ID[i].x].mLabel = matrix_number;
-            corner_IDs[edge_list_ID[i].x].mPos = Point(10, 10);
+            corner_IDs[edge_list_ID[i].x].mPos = Point(number_of_corner_x, number_of_corner_y);
             direction[edge_list_ID[i].x] = { Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0) };
             matrix_with_ID[corner_IDs[edge_list_ID[i].x].mLabel][corner_IDs[edge_list_ID[i].x].mPos.x][corner_IDs[edge_list_ID[i].x].mPos.y] = edge_list_ID[i].x;
 
@@ -131,9 +131,13 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
                 for (int j = 0; j < edge_list_ID.size(); j++) {
                     if (edge_list_ID[j].x == corner_now) {
                         if (!corner_visited[edge_list_ID[j].y]) {
-                            q.push(edge_list_ID[j].y);
-                       
                             Point p = directionJudge(fastAtan2(cornerPoints[edge_list_ID[j].y].point_in_subpixel.y - cornerPoints[corner_now].point_in_subpixel.y, cornerPoints[edge_list_ID[j].y].point_in_subpixel.x - cornerPoints[corner_now].point_in_subpixel.x), cornerPoints[corner_now], cornerPoints[edge_list_ID[j].y]);
+                            
+                            if ((p.x == -1) || (p.y == -1)) {
+                                continue;
+                            }
+
+                            q.push(edge_list_ID[j].y);
                             corner_IDs[edge_list_ID[j].y].mLabel = corner_IDs[edge_list_ID[j].x].mLabel;
                             corner_IDs[edge_list_ID[j].y].mPos = direction[corner_now][p.x] + corner_IDs[corner_now].mPos;
                             matrix_with_ID[corner_IDs[edge_list_ID[j].y].mLabel][corner_IDs[edge_list_ID[j].y].mPos.x][corner_IDs[edge_list_ID[j].y].mPos.y] = edge_list_ID[j].y;
@@ -161,15 +165,16 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
             matrix_number++;
         }
     }
-    /*
+    
     for (int i = 0; i < cornerPoints.size(); i++) {
         std::stringstream ss;
         ss << '(' << corner_IDs[i].mPos.x << ", " << corner_IDs[i].mPos.y << ')';
         string s = ss.str();
         putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
-    }*/
+    }
+
     //imshow("Organization", imgMark);
-    //waitKey(0);
+    //waitKey(1);
 }
 
 inline float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {
@@ -186,7 +191,7 @@ inline float ArrayOrganization::edgeAngle2(Point2f a, Point2f b) {
 }
 
 inline Point ArrayOrganization::directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2) {
-    Point res;
+    Point res = Point(-1, -1);
     if (angle >= 270)
         angle -= 360;
     if (angleJudge(angle, corner_1.angle_black_edge))         res.x = 0;

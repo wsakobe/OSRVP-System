@@ -38,7 +38,7 @@ private:
 
 	int maskTemR = 6, maskTemp = 13;
 	int maskR = 5;
-	int maskSurface = 7;
+	int maskSurface = 5;
 	int maskSurfaceL = 2 * maskSurface + 1;
 	int edgeIdx, directIdx;
 	

@@ -32,8 +32,9 @@ void plotModel(Mat& image, PoseInformation Pose);
 int main(int argc, char* argv[]) {
     initModel();
     int start_time, last_time = 0, middle_time, middle_time1;
+    //image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
+    
     VideoCapture capture;
-
     image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
     if (!capture.isOpened())
     {
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
 
         //Rect roi(900, 400, 1000, 600);
         //image = image(roi).clone();
-
+        
         corner_pos_ID_left = readMarker(image);
 
         middle_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

@@ -19,11 +19,17 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 					isEnd = false;
 					if (checkLattice(i, j, k)) {
 						Point2f center_location = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel) / 4;
-						Point2f left_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.2) / 2;
-						Point2f up_location     = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.2) / 2;
-						Point2f right_location  = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.8) / 2;
-						Point2f down_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.2 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.8 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.8) / 2;
+						Point2f left_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.15) / 2;
+						Point2f up_location     = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.15) / 2;
+						Point2f right_location  = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.85) / 2;
+						Point2f down_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.85) / 2;
 						
+						circle(imgMark, center_location, 1, Scalar(0, 0, 255), -1);
+						circle(imgMark, left_location, 1, Scalar(0, 255, 255), -1);
+						circle(imgMark, up_location, 1, Scalar(0, 255, 255), -1);
+						circle(imgMark, right_location, 1, Scalar(0, 255, 255), -1);
+						circle(imgMark, down_location, 1, Scalar(0, 255, 255), -1);
+
 						pixel_center = img.ptr<float>((int)center_location.y)[(int)center_location.x];
 						ave_pixel_around = (img.ptr<float>((int)left_location.y)[(int)left_location.x] + img.ptr<float>((int)right_location.y)[(int)right_location.x] + img.ptr<float>((int)up_location.y)[(int)up_location.x] + img.ptr<float>((int)down_location.y)[(int)down_location.x]) /4;
 						
@@ -37,9 +43,9 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 		if (isEnd) break;
 	}	
 	
-	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.9);
+	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.85);
 
-	
+	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
 		std::stringstream ss;
@@ -47,9 +53,9 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 		string s = ss.str();
 		putText(imgMark, s, corner_pos_ID[i].subpixel_pos + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
 	}
-	//imshow("Identify", imgMark);
-	//waitKey(1);
-	
+	imshow("Identify", imgMark);
+	waitKey(1);
+	*/
 	return corner_pos_ID;
 }
 
