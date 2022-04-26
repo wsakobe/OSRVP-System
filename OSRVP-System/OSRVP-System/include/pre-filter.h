@@ -26,7 +26,7 @@ struct cornerPreInfo {
 
 class PreFilter {
 public:
-	int maskR = 5;
+	int maskR = 6;
 	int kernal_size = 7;
 	int sigma = 3;
 	Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence, img_blur;
@@ -36,6 +36,8 @@ private:
 	vector<cornerPreInfo> corners;
 	cornerPreInfo temporal_corner;
 	float G_filtermin, G_filtermax;
+
+	priority_queue <float, vector<float>, less<float> > Q;
 };
 
 #endif // INCLUDE_PRE_FILTER_H_

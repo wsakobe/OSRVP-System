@@ -58,8 +58,8 @@ int *ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
 }
 
 void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints){
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     memset(selection, true, sizeof(selection));
 
@@ -110,8 +110,8 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     int matrix_number = 0;
     vector<matrixInform> corner_IDs(cornerPoints.size());

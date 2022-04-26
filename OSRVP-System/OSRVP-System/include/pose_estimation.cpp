@@ -70,7 +70,7 @@ PoseInformation PoseEstimation::poseEstimationMono(vector<corner_pos_with_ID> co
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++)
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
-	cout << reprojection_error / imagePoints.size() << endl;
+	//cout << reprojection_error / imagePoints.size() << endl;
 
 	return Pose6D;
 }

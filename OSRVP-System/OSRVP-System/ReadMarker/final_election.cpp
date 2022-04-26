@@ -101,7 +101,7 @@ vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPr
     subpixelRefinement(img, corners);
     fitQuadraticSurface(img);
     templateMatching(img);
-    
+   
     return cornerPoints;
 }
 
@@ -140,6 +140,7 @@ void FinalElection::fitQuadraticSurface(Mat& img) {
         Rect rect(cornerPoints[i].point_in_pixel.x - maskSurface, cornerPoints[i].point_in_pixel.y - maskSurface, maskSurfaceL, maskSurfaceL);
         img_hypersurface = img(rect).clone();
         img_hypersurface = img_hypersurface.reshape(1, maskSurfaceL * maskSurfaceL);
+        
         solve(hypersurface_temp, img_hypersurface, hypersurface_coeffs, DECOMP_SVD);
         
         coeffs = (Mat_<float>(3, 1) << hypersurface_coeffs.at<float>(0, 0), -1 * hypersurface_coeffs.at<float>(1, 0), hypersurface_coeffs.at<float>(2, 0));
@@ -156,15 +157,15 @@ void FinalElection::fitQuadraticSurface(Mat& img) {
             cornerPoints[i].angle_white_edge = min(angle1, angle2);
             cornerPoints[i].angle_black_edge = max(angle1, angle2);
         }
-        //cout << i << ' ' << coeffs.at<float>(0, 0) << ' ' << coeffs.at<float>(1, 0) << ' ' << coeffs.at<float>(2, 0) << ' ' << roots.at<float>(0, 0) << ' ' << roots.at<float>(1, 0) << ' ' << cornerPoints[i].angle_white_edge << ' ' << cornerPoints[i].angle_black_edge << endl;
+        
     }
     
     return;
 }
 
 void FinalElection::templateMatching(Mat& img) {
-    Mat imgMark(img.rows, img.cols, CV_32FC3);
-    cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    //Mat imgMark(img.rows, img.cols, CV_32FC3);
+    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     for (int i = 0; i < cornerPoints.size(); i++) {
         //edge_angle = cornerPoints[i].angle_black_edge - cornerPoints[i].angle_white_edge;
@@ -194,6 +195,8 @@ void FinalElection::templateMatching(Mat& img) {
         }
     }
 
+    if (template_response_score_max < T_temp_max) cornerPoints.clear();
+
     for (vector<cornerInformation>::iterator it = cornerPoints.begin(); it != cornerPoints.end();)
     {
         if (((*it).template_response_score + (*it).hessian_response_score * lamda) < (template_response_score_max + lamda * hessian_response_score_max - T_response))
@@ -202,18 +205,17 @@ void FinalElection::templateMatching(Mat& img) {
             it++;
     }
     
-    /*
-    for (int i = 0; i < cornerPoints.size(); i++) {
-        circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
-        std::stringstream ss;
-        ss << std::setprecision(3) << (cornerPoints[i].template_response_score  + cornerPoints[i].hessian_response_score * lamda);
-        //ss << i;
-        string s = ss.str();
-        putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
-    }
+    //for (int i = 0; i < cornerPoints.size(); i++) {
+    //    circle(imgMark, cornerPoints[i].point_in_subpixel, 3, Scalar(255, 0, 0), -1);
+    //    std::stringstream ss;
+    //    ss << std::setprecision(3) << (cornerPoints[i].template_response_score  + cornerPoints[i].hessian_response_score * lamda);
+    //    //ss << i;
+    //    string s = ss.str();
+    //    putText(imgMark, s, cornerPoints[i].point_in_subpixel + Point2f(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
+    //}
 
-    imshow("imgMark", imgMark);
-    waitKey(0);
-    */
+    //imshow("imgMark", imgMark);
+    //waitKey(0);
+    
     return;
 }

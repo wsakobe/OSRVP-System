@@ -29,11 +29,12 @@ void initModel();
 vector<corner_pos_with_ID> readMarker(Mat& image);
 void plotModel(Mat& image, PoseInformation Pose);
 
+int start_time, last_time = 0;
+
 int main(int argc, char* argv[]) {
     initModel();
-    int start_time, last_time = 0, middle_time, middle_time1;
-    image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
     
+    //image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
     
     VideoCapture capture;
     image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
@@ -42,17 +43,14 @@ int main(int argc, char* argv[]) {
         printf("can not open ...\n");
         return -1;
     }
-    while (capture.read(image)) {
-        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        //cout << 1000.0 / (start_time - last_time) << endl;
-
-        //Rect roi(900, 400, 1000, 600);
-        //image = image(roi).clone();
-        imwrite("image.bmp", image);
+    while (capture.read(image)) {      
+        Rect roi(600, 600, 500, 500);
+        image = image(roi).clone();
+        //imshow("image_pose_pnp", image);
+        
+        corner_pos_ID_left = readMarker(image);
         corner_pos_ID_left = readMarker(image);
 
-        middle_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        
         //cout << corner_pos_ID_left.size() << endl;
         if (corner_pos_ID_left.size() < 4) {
             cout << "Not enough corners!" << endl;
@@ -60,13 +58,11 @@ int main(int argc, char* argv[]) {
             waitKey(1);
             continue;
         }
-
+        
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
         
         plotModel(image, Pose);
-
-        last_time = start_time;
     }
 
     destroyAllWindows();
@@ -76,21 +72,24 @@ int main(int argc, char* argv[]) {
 vector<corner_pos_with_ID> readMarker(Mat& image) {
     cvtColor(image, image_gray, COLOR_BGR2GRAY);
     image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
+    corner_pos_ID.clear();
 
     ImgParams.height = image_gray.rows;
     ImgParams.width = image_gray.cols;
-
+    
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
 
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);
 
-    ArrayOrganization arrayOrg;
-    int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+    if (cornerPoints.size() > 4) {
+        ArrayOrganization arrayOrg;
+        int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
 
-    IdentifyMarker identify;
-    corner_pos_ID = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
+        IdentifyMarker identify;
+        corner_pos_ID = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
+    }
     
     return corner_pos_ID;
 }

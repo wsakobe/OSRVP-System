@@ -5,8 +5,8 @@ using namespace cv;
 
 vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[30])
 {
-	Mat imgMark(img.rows, img.cols, CV_32FC3);
-	cvtColor(img, imgMark, COLOR_GRAY2RGB);
+	//Mat imgMark(img.rows, img.cols, CV_32FC3);
+	//cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 	corner_pos_ID.clear();
@@ -22,11 +22,11 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 						Point2f right_location  = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.85) / 2;
 						Point2f down_location   = (cornerPoints[matrix_with_ID[i][j][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j + 1][k]].point_in_subpixel * 0.15 + cornerPoints[matrix_with_ID[i][j][k + 1]].point_in_subpixel * 0.85 + cornerPoints[matrix_with_ID[i][j + 1][k + 1]].point_in_subpixel * 0.85) / 2;
 						
-						circle(imgMark, center_location, 1, Scalar(0, 0, 255), -1);
-						circle(imgMark, left_location, 1, Scalar(0, 255, 255), -1);
-						circle(imgMark, up_location, 1, Scalar(0, 255, 255), -1);
-						circle(imgMark, right_location, 1, Scalar(0, 255, 255), -1);
-						circle(imgMark, down_location, 1, Scalar(0, 255, 255), -1);
+						//circle(imgMark, center_location, 1, Scalar(0, 0, 255), -1);
+						//circle(imgMark, left_location, 1, Scalar(0, 255, 255), -1);
+						//circle(imgMark, up_location, 1, Scalar(0, 255, 255), -1);
+						//circle(imgMark, right_location, 1, Scalar(0, 255, 255), -1);
+						//circle(imgMark, down_location, 1, Scalar(0, 255, 255), -1);
 
 						pixel_center = img.ptr<float>((int)center_location.y)[(int)center_location.x];
 						ave_pixel_around = (img.ptr<float>((int)left_location.y)[(int)left_location.x] + img.ptr<float>((int)right_location.y)[(int)right_location.x] + img.ptr<float>((int)up_location.y)[(int)up_location.x] + img.ptr<float>((int)down_location.y)[(int)down_location.x]) /4;

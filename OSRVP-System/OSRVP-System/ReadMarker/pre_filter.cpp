@@ -5,6 +5,7 @@ using namespace std;
 vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     //Mat imgMark(img.rows, img.cols, CV_32FC3);
     //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Q.empty();
 
     GaussianBlur(img, img_blur, Size(kernal_size, kernal_size), sigma);
     Scharr(img_blur, Gx, CV_32FC1, 1, 0);
@@ -13,21 +14,23 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     Scharr(Gx, Gxx, CV_32FC1, 1, 0);
     Scharr(Gy, Gyy, CV_32FC1, 0, 1);
     Scharr(Gx, Gxy, CV_32FC1, 0, 1);
-
-    G_score = Gxy.mul(Gxy) - Gxx.mul(Gyy);
-    dilate(G_score, G_score_after_NMS, Mat());
     
+    G_score = Gxy.mul(Gxy) - Gxx.mul(Gyy);
+
+    dilate(G_score, G_score_after_NMS, Mat());
     for (int i = maskR; i < img_blur.rows - maskR; i++)
-    	for (int j = maskR; j < img_blur.cols - maskR; j++)
-    		if (G_score.ptr<float>(i)[j] != G_score_after_NMS.ptr<float>(i)[j])
+        for (int j = maskR; j < img_blur.cols - maskR; j++)
+            if (G_score.ptr<float>(i)[j] == G_score_after_NMS.ptr<float>(i)[j]) {
+                Q.push(G_score_after_NMS.ptr<float>(i)[j]);
+            }
+            else {
                 G_score_after_NMS.ptr<float>(i)[j] = 0;
-
-    G_score_after_NMS.copyTo(score_sequence);
-    score_sequence = score_sequence.reshape(1, img_blur.cols * img_blur.rows);
-    cv::sort(score_sequence, score_sequence, SORT_EVERY_COLUMN + SORT_DESCENDING);
-
-    G_filtermax = score_sequence.ptr<float>(0)[1];
-    G_filtermin = score_sequence.ptr<float>(number)[1];
+            }
+                
+    G_filtermax = Q.top();
+    for (int i = 0; i < number; i++) Q.pop();
+    G_filtermin = Q.top();
+    
 
     for (int i = maskR; i < img_blur.rows - maskR; i++)
         for (int j = maskR; j < img_blur.cols - maskR; j++) {
@@ -47,5 +50,6 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
         }	
     //imshow("imgMark", imgMark);
     //waitKey(0);
+
 	return corners;
 }
