@@ -43,14 +43,20 @@ int main(int argc, char* argv[]) {
         printf("can not open ...\n");
         return -1;
     }
-    while (capture.read(image)) {      
-        Rect roi(600, 600, 500, 500);
-        image = image(roi).clone();
+    capture.read(image);
+    image1 = image;
+    //while (capture.read(image)) {    
+    while (1){
+        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        cout << 1000.0 / (-last_time + start_time) << endl;
+
+        Rect roi(600, 600, 600, 600);
+        image = image1(roi);
         //imshow("image_pose_pnp", image);
         
         corner_pos_ID_left = readMarker(image);
-        corner_pos_ID_left = readMarker(image);
-
+        //corner_pos_ID_left = readMarker(image);
+        
         //cout << corner_pos_ID_left.size() << endl;
         if (corner_pos_ID_left.size() < 4) {
             cout << "Not enough corners!" << endl;
@@ -61,8 +67,10 @@ int main(int argc, char* argv[]) {
         
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
+
+        last_time = start_time;
         
-        plotModel(image, Pose);
+        //plotModel(image, Pose);
     }
 
     destroyAllWindows();

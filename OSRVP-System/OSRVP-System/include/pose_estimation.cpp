@@ -53,7 +53,7 @@ PoseInformation PoseEstimation::poseEstimationMono(vector<corner_pos_with_ID> co
 		world_points.push_back(Point3f(model_3D[corner_set[i].ID][0], model_3D[corner_set[i].ID][1], model_3D[corner_set[i].ID][2]));
 		image_points.push_back(corner_set[i].subpixel_pos);
 	}
-	solvePnPRansac(world_points, image_points, IntrinsicCam, DistCoeff, rvec, tvec, false, 100, 0.5, 0.99, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, IntrinsicCam, DistCoeff, rvec, tvec, false, 50, 1, 0.99, noArray(), SOLVEPNP_EPNP);
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
