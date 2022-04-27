@@ -1,6 +1,6 @@
 #include "include/pose_estimation.h"
 #include <fstream>
-#include "omp.h"
+#include <algorithm>
 
 using namespace cv;
 using namespace std;
@@ -11,6 +11,7 @@ const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 2185.86372107324, 0, 952.022
 const Mat DistCoeffLeft = (Mat_<double>(5, 1) << -0.170085848625626, 0.203029010848620, 0, 0, 0);
 
 int number_of_corner_x_input, number_of_corner_y_input;
+int BoxBorder = 6;
 
 vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
@@ -20,14 +21,16 @@ float model_3D[number_of_corner_x * number_of_corner_y][3];
 int dot_matrix[number_of_corner_x][number_of_corner_y];
 imageParams ImgParams;
 PoseInformation Pose;
+DynamicROIBox Box;
 
-Mat image, image1, image_gray;
+Mat image, image_crop, image_gray;
 vector<Point3f> axesPoints;
 vector<Point2f> imagePoints;
 
 void initModel();
 vector<corner_pos_with_ID> readMarker(Mat& image);
 void plotModel(Mat& image, PoseInformation Pose);
+DynamicROIBox extendedKalmanFilter(PoseInformation Pose, vector<corner_pos_with_ID> corner_pos_ID);
 
 int start_time, last_time = 0;
 
@@ -44,32 +47,44 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     capture.read(image);
-    image1 = image;
-    //while (capture.read(image)) {    
-    while (1){
+    Box.height = image.rows;
+    Box.width = image.cols;
+    while (capture.read(image)) {    
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         cout << 1000.0 / (-last_time + start_time) << endl;
+        last_time = start_time;
 
-        Rect roi(600, 600, 600, 600);
-        image = image1(roi);
-        //imshow("image_pose_pnp", image);
+        //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
+        Rect roi(Box.position.x, Box.position.y, Box.width, Box.height);
+        image_crop = image(roi);
+        /*image_crop.copyTo(mask(roi));
+        imshow("DynamicROI", mask);
+        waitKey(1);*/
         
-        corner_pos_ID_left = readMarker(image);
-        //corner_pos_ID_left = readMarker(image);
+        corner_pos_ID_left = readMarker(image_crop);
+        corner_pos_ID_left = readMarker(image_crop);
         
         //cout << corner_pos_ID_left.size() << endl;
         if (corner_pos_ID_left.size() < 4) {
             cout << "Not enough corners!" << endl;
             imshow("image_pose_pnp", image);
             waitKey(1);
+            if (++Box.lostFrame > 5) {
+                Box.position = Point(0, 0);
+                Box.height = image.rows;
+                Box.width = image.cols;
+            }
             continue;
         }
         
+        for (int i = 0; i < corner_pos_ID_left.size(); i++)
+            corner_pos_ID_left[i].subpixel_pos += Point2f(Box.position);
+
         PoseEstimation pE;
         Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
 
-        last_time = start_time;
-        
+        Box = extendedKalmanFilter(Pose, corner_pos_ID_left);
+
         //plotModel(image, Pose);
     }
 
@@ -84,7 +99,7 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
 
     ImgParams.height = image_gray.rows;
     ImgParams.width = image_gray.cols;
-    
+
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
 
@@ -100,6 +115,32 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
     }
     
     return corner_pos_ID;
+}
+
+DynamicROIBox extendedKalmanFilter(PoseInformation Pose, vector<corner_pos_with_ID> corner_pos_ID) {
+    int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
+    axesPoints.clear();
+    imagePoints.clear();
+
+    while (cnt < 194) {
+        if ((model_3D[cnt][0] - 0.0 > 1e-3) || (model_3D[cnt][1] - 0.0 > 1e-3) || (model_3D[cnt][2] - 0.0 > 1e-3))
+            axesPoints.push_back(Point3f(model_3D[cnt][0], model_3D[cnt][1], model_3D[cnt][2]));
+        cnt++;
+    }
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+
+    for (int i = 0; i < imagePoints.size(); i++) {
+        if (floor(imagePoints[i].x) < x_min) x_min = floor(imagePoints[i].x);
+        if (floor(imagePoints[i].y) < y_min) y_min = floor(imagePoints[i].y);
+        if (ceil(imagePoints[i].x) > x_max) x_max = ceil(imagePoints[i].x);
+        if (ceil(imagePoints[i].y) > y_max) y_max = ceil(imagePoints[i].y);
+    }
+    Box.position = Point(max(0, x_min - BoxBorder), max(0, y_min - BoxBorder));
+    Box.width = x_max - x_min + BoxBorder * 2;
+    Box.height  = y_max - y_min + BoxBorder * 2;
+    Box.lostFrame = 0;
+
+    return Box;
 }
 
 void initModel() {
@@ -145,6 +186,8 @@ void initModel() {
     for (int i = 0; i < number_of_corner_x_input; i++)
         for (int j = 0; j < number_of_corner_y_input; j++)
             Files >> dot_matrix[i][j];
+
+    Box.position = Point(0, 0);
 }
 
 void plotModel(Mat& image, PoseInformation Pose) {

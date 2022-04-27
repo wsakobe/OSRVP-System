@@ -8,12 +8,19 @@ struct PoseInformation {
 	vector<Point3f> tracking_points;
 };
 
+struct DynamicROIBox {
+	Point position;
+	int width, height;
+	int lostFrame = 0;
+};
+
 class PoseEstimation {
 public:
 	PoseInformation poseEstimationStereo(vector<corner_pos_with_ID> corner_set_left, vector<corner_pos_with_ID> corner_set_right, Mat IntrinsicCamLeft, Mat DistcoeffLeft, Mat IntrinsicCamRight, Mat DistcoeffRight, Mat Rot, Mat Trans, float(*model_3D)[3]);
 	PoseInformation poseEstimationMono(vector<corner_pos_with_ID> corner_set, Mat IntrinsicCam, Mat DistCoeff, float(*model_3D)[3]);
 
 	PoseInformation Pose6D;
+
 
 private:
 	void triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, Mat IntrinsicCamLeft, Mat IntrinsicCamRight, Mat Rot, Mat Trans);
