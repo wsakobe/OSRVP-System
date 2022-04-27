@@ -35,4 +35,5 @@ private:
 	vector<Point2f> pts_1, pts_2;
 };
 
+#pragma warning(disable:4996)
 #endif
