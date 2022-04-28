@@ -8,37 +8,34 @@
 using namespace cv;
 using namespace std;
 
-const Mat CamIntrinsicLeft = (Mat_<double>(3, 3) << 2185.86372107324, 0, 952.022350099373,
-    0, 2186.58735329496, 563.875348654881,
-    0, 0, 1);
-const Mat DistCoeffLeft = (Mat_<double>(5, 1) << -0.170085848625626, 0.203029010848620, 0, 0, 0);
-int BoxBorder = 6;
-
 //ReadMarker Preparation
-int number_of_corner_x_input, number_of_corner_y_input;
-vector<cornerPreInfo> candidate_corners;
-vector<cornerInformation> cornerPoints;
-vector<corner_pos_with_ID> corner_pos_ID_left, corner_pos_ID_right, corner_pos_ID;
+int camera_number, number_of_corner_x_input, number_of_corner_y_input;
+vector<CameraParams> camera_parameters;
+CameraParams cam;
 valueMatrix value_matrix[1025];
 float model_3D[number_of_corner_x * number_of_corner_y][3];
 int dot_matrix[number_of_corner_x][number_of_corner_y];
+
 imageParams ImgParams;
+vector<cornerPreInfo> candidate_corners;
+vector<cornerInformation> cornerPoints;
+vector<corner_pos_with_ID> corner_pos;
+vector<vector<corner_pos_with_ID>> corner_pos_ID;
+
 PoseInformation Pose;
-DynamicROIBox Box;
+DynamicROIBox Box[5];
+int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
+int BoxBorder = 10;
 
 //HikVision Camera Preparation
-int nRet = MV_OK;
-int nRet1 = MV_OK;
-int nRet2 = MV_OK;
-void* handle1 = NULL;
-void* handle2 = NULL;
-unsigned char* pData1;
-unsigned char* pData2;
+int nRet[5] = { MV_OK };
+void* handle[5] = { NULL };
+unsigned char* pData[5];
 unsigned int g_nPayloadSize = 0;
 MV_FRAME_OUT_INFO_EX* imageInfo;
 Mat Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData);
 MV_CC_DEVICE_INFO_LIST stDeviceList;
-MV_FRAME_OUT_INFO_EX stImageInfo1 = { 0 }, stImageInfo2 = { 0 };
+MV_FRAME_OUT_INFO_EX stImageInfo[5] = { { 0 } };
 
 Mat image, image_crop, image_gray;
 vector<Point3f> axesPoints;
@@ -47,8 +44,8 @@ vector<Point2f> imagePoints;
 void initModel();
 void initCamera();
 vector<corner_pos_with_ID> readMarker(Mat& image);
-void plotModel(Mat& image, PoseInformation Pose);
-DynamicROIBox dynamicROI(PoseInformation Pose, vector<corner_pos_with_ID> corner_pos_ID);
+void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters);
+void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters);
 
 int start_time, last_time = 0;
 
@@ -56,76 +53,76 @@ int main(int argc, char* argv[]) {
     initModel();  
 
     //工业相机实时视频流
+    /*
     initCamera();
     while (1) {
         if (kbhit()) {
             char ch = getch();
             if (ch == 27) {
-                nRet1 = MV_CC_CloseDevice(handle1);
-                nRet2 = MV_CC_CloseDevice(handle2);
-                if ((MV_OK != nRet1) || (MV_OK != nRet2))
-                {
-                    printf("Close Device fail! nRet [0x%x]\n", nRet1);
-                    break;
+                for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+                    nRet[i] = MV_CC_CloseDevice(handle[i]);
+                    if (MV_OK != nRet[i])
+                    {
+                        printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
+                        break;
+                    }
                 }
-
                 // Destroy handle
-                nRet1 = MV_CC_DestroyHandle(handle1);
-                nRet2 = MV_CC_DestroyHandle(handle2);
-                if ((MV_OK != nRet1) || (MV_OK != nRet2))
-                {
-                    printf("Destroy Handle fail! nRet [0x%x]\n", nRet1);
-                    break;
-                }
+                for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+                    nRet[i] = MV_CC_DestroyHandle(handle[i]);
+                    if (MV_OK != nRet[i])
+                    {
+                        printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
+                        break;
+                    }
+                }              
                 printf("Device successfully closed.\n");
                 break;
             }
             ch = 0;
         }
-        nRet1 = MV_CC_GetOneFrameTimeout(handle1, pData1, g_nPayloadSize, &stImageInfo1, 100);
-        nRet2 = MV_CC_GetOneFrameTimeout(handle2, pData2, g_nPayloadSize, &stImageInfo2, 100);
-        if ((MV_OK == nRet1) && (MV_OK == nRet2)) {
-            image = Convert2Mat(&stImageInfo1, pData1);
-            image = Convert2Mat(&stImageInfo2, pData2);
+        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+            nRet[i] = MV_CC_GetOneFrameTimeout(handle[i], pData[i], g_nPayloadSize, &stImageInfo[i], 100);
+            if (MV_OK == nRet[i]){
+                image = Convert2Mat(&stImageInfo[i], pData[i]);
+                Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
+                image_crop = image(roi);
+                //image_crop.copyTo(mask(roi));
+                //imshow("DynamicROI", mask);
+                //waitKey(1);
 
-            Rect roi(Box.position.x, Box.position.y, Box.width, Box.height);
-            image_crop = image(roi);
-            /*image_crop.copyTo(mask(roi));
-            imshow("DynamicROI", mask);
-            waitKey(1);*/
-
-            corner_pos_ID_left = readMarker(image_crop);
-            corner_pos_ID_left = readMarker(image_crop);
-
-            if (corner_pos_ID_left.size() < 4) {
-                cout << "Not enough corners!" << endl;
-                imshow("image_pose_pnp", image);
-                waitKey(1);
-                if (++Box.lostFrame > 5) {
-                    Box.position = Point(0, 0);
-                    Box.height = image.rows;
-                    Box.width = image.cols;
+                corner_pos_ID[i] = readMarker(image_crop);
+                
+                if (corner_pos_ID.size() < 4) {
+                    cout << "Not enough corners!" << endl;
+                    imshow("image_pose_pnp", image);
+                    waitKey(1);
+                    if (++Box[i].lostFrame > 5) {
+                        Box[i].position = Point(0, 0);
+                        Box[i].height = image.rows;
+                        Box[i].width = image.cols;
+                    }
+                    continue;
                 }
-                continue;
+
+                for (int j = 0; j < corner_pos_ID[i].size(); j++)
+                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
             }
-
-            for (int i = 0; i < corner_pos_ID_left.size(); i++)
-                corner_pos_ID_left[i].subpixel_pos += Point2f(Box.position);
-
-            PoseEstimation pE;
-            Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
-
-            Box = dynamicROI(Pose, corner_pos_ID_left);
-
-            plotModel(image, Pose);
-
-            last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            cout << last_time - start_time << endl;
         }
+
+        PoseEstimation pE;
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
+
+        Box = dynamicROI(Pose, camera_parameters);
+
+        plotModel(image, Pose);
+
+        last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        cout << last_time - start_time << endl;
     }
+    */
 
     //视频流处理
-    /*
     VideoCapture capture;
     image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
     if (!capture.isOpened())
@@ -134,47 +131,44 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     capture.read(image);
-    Box.height = image.rows;
-    Box.width = image.cols;
+    Box[0].height = image.rows;
+    Box[0].width = image.cols;
+    stDeviceList.nDeviceNum = 1;
     while (capture.read(image)) {    
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        cout << start_time - last_time << endl;
+        last_time = start_time;
         
         //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
-        Rect roi(Box.position.x, Box.position.y, Box.width, Box.height);
+        Rect roi(Box[0].position.x, Box[0].position.y, Box[0].width, Box[0].height);
         image_crop = image(roi);
         //image_crop.copyTo(mask(roi));
         //imshow("DynamicROI", mask);
         //waitKey(1);
 
-        corner_pos_ID_left = readMarker(image_crop);
-        corner_pos_ID_left = readMarker(image_crop);
+        corner_pos_ID.push_back(readMarker(image_crop));
 
-        if (corner_pos_ID_left.size() < 4) {
+        if (corner_pos_ID[0].size() < 4) {
             cout << "Not enough corners!" << endl;
-            imshow("image_pose_pnp", image);
+            imshow("image_pose", image);
             waitKey(1);
-            if (++Box.lostFrame > 5) {
-                Box.position = Point(0, 0);
-                Box.height = image.rows;
-                Box.width = image.cols;
+            if (++Box[0].lostFrame > 5) {
+                Box[0].position = Point(0, 0);
+                Box[0].height = image.rows;
+                Box[0].width = image.cols;
             }
             continue;
         }
-        
-        for (int i = 0; i < corner_pos_ID_left.size(); i++)
-            corner_pos_ID_left[i].subpixel_pos += Point2f(Box.position);
 
+        for (int i = 0; i < corner_pos_ID[0].size(); i++)  corner_pos_ID[0][i].subpixel_pos += Point2f(Box[0].position);
         PoseEstimation pE;
-        Pose = pE.poseEstimationMono(corner_pos_ID_left, CamIntrinsicLeft, DistCoeffLeft, model_3D);
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
-        Box = dynamicROI(Pose, corner_pos_ID_left);
+        dynamicROI(Pose, camera_parameters);
 
-        plotModel(image, Pose);
-
-        last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << last_time - start_time << endl;
+        plotModel(image, Pose, camera_parameters);
     }
-    */
+    
     destroyAllWindows();
     return 0;
 }
@@ -198,36 +192,37 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
         int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
 
         IdentifyMarker identify;
-        corner_pos_ID = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
+        corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
     }
     
-    return corner_pos_ID;
+    return corner_pos;
 }
 
-DynamicROIBox dynamicROI(PoseInformation Pose, vector<corner_pos_with_ID> corner_pos_ID) {
-    int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
+void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
     axesPoints.clear();
-    imagePoints.clear();
-
     while (cnt < number_of_corner_x * number_of_corner_y) {
         if ((model_3D[cnt][0] - 0.0 > 1e-3) || (model_3D[cnt][1] - 0.0 > 1e-3) || (model_3D[cnt][2] - 0.0 > 1e-3))
             axesPoints.push_back(Point3f(model_3D[cnt][0], model_3D[cnt][1], model_3D[cnt][2]));
         cnt++;
     }
-    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    
+    for (int num = 0; num < stDeviceList.nDeviceNum; num++) {
+        cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
+        imagePoints.clear();
 
-    for (int i = 0; i < imagePoints.size(); i++) {
-        if (floor(imagePoints[i].x) < x_min) x_min = floor(imagePoints[i].x);
-        if (floor(imagePoints[i].y) < y_min) y_min = floor(imagePoints[i].y);
-        if (ceil(imagePoints[i].x) > x_max) x_max = ceil(imagePoints[i].x);
-        if (ceil(imagePoints[i].y) > y_max) y_max = ceil(imagePoints[i].y);
+        projectPoints(axesPoints, camera_parameters[num].Rotation * Pose.rotation, camera_parameters[num].Rotation * Pose.translation + camera_parameters[num].Translation, camera_parameters[num].Intrinsic, camera_parameters[num].Distortion, imagePoints);
+
+        for (int i = 0; i < imagePoints.size(); i++) {
+            if (floor(imagePoints[i].x) < x_min) x_min = floor(imagePoints[i].x);
+            if (floor(imagePoints[i].y) < y_min) y_min = floor(imagePoints[i].y);
+            if (ceil(imagePoints[i].x) > x_max) x_max = ceil(imagePoints[i].x);
+            if (ceil(imagePoints[i].y) > y_max) y_max = ceil(imagePoints[i].y);
+        }
+        Box[num].position = Point(max(0, x_min - BoxBorder), max(0, y_min - BoxBorder));
+        Box[num].width = x_max - x_min + BoxBorder * 2;
+        Box[num].height  = y_max - y_min + BoxBorder * 2;
+        Box[num].lostFrame = 0;
     }
-    Box.position = Point(max(0, x_min - BoxBorder), max(0, y_min - BoxBorder));
-    Box.width = x_max - x_min + BoxBorder * 2;
-    Box.height  = y_max - y_min + BoxBorder * 2;
-    Box.lostFrame = 0;
-
-    return Box;
 }
 
 void initModel() {
@@ -235,6 +230,7 @@ void initModel() {
     string modelName = filePath + "Model3D.txt";
     string valueMatrixName = filePath + "valueMatrix.txt";
     string dotMarixName = filePath + "dotMatrix.txt";
+    string cameraParametersName = filePath + "cameraParams.yml";
 
     ifstream Files;
     Files.open(modelName);
@@ -274,59 +270,77 @@ void initModel() {
         for (int j = 0; j < number_of_corner_y_input; j++)
             Files >> dot_matrix[i][j];
 
-    Box.position = Point(0, 0);
+    FileStorage fs(cameraParametersName, FileStorage::READ);
+
+    fs["cameraNumber"] >> camera_number;
+    fs["imageWidth"] >> ImgParams.width;
+    fs["imageHeight"] >> ImgParams.height;
+
+    for (int i = 0; i < camera_number; i++) {
+        fs["cameraMatrix"] >> cam.Intrinsic;
+        fs["distCoeffs"] >> cam.Distortion;
+        fs["Rotation"] >> cam.Rotation;
+        fs["Translation"] >> cam.Translation;
+        camera_parameters.push_back(cam);
+    }
+
+    fs.release();    	//close the file opened
 }
 
 void initCamera() {
     memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
-    nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
-    if (MV_OK != nRet)
+    nRet[0] = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
+    if (MV_OK != nRet[0])
     {
-        printf("Enum Devices fail! nRet [0x%x]\n", nRet);
+        printf("Enum Devices fail! nRet [0x%x]\n", nRet[0]);
     }
 
-    nRet1 = MV_CC_CreateHandle(&handle1, stDeviceList.pDeviceInfo[0]);
-    nRet2 = MV_CC_CreateHandle(&handle2, stDeviceList.pDeviceInfo[1]);
-    if ((MV_OK != nRet1) || (MV_OK != nRet2))
-    {
-        printf("Create Handle fail! nRet [0x%x]\n", nRet1);
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_CreateHandle(&handle[i], stDeviceList.pDeviceInfo[i]);
+        if (MV_OK != nRet[i])
+        {
+            printf("Create Handle fail! nRet [0x%x]\n", nRet[i]);
+        }
     }
 
-    nRet1 = MV_CC_OpenDevice(handle1);
-    nRet2 = MV_CC_OpenDevice(handle2);
-    if ((MV_OK != nRet1) || (MV_OK != nRet2))
-    {
-        printf("Open Device fail! nRet [0x%x]\n", nRet1);
-    }
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_OpenDevice(handle[i]);
+        if (MV_OK != nRet[i])
+        {
+            printf("Open Device fail! nRet [0x%x]\n", nRet[i]);
+        }
+    }      
 
-    nRet1 = MV_CC_SetEnumValue(handle1, "TriggerMode", 0);
-    nRet2 = MV_CC_SetEnumValue(handle2, "TriggerMode", 0);
-    if ((MV_OK != nRet1) || (MV_OK != nRet2))
-    {
-        printf("Set Enum Value fail! nRet [0x%x]\n", nRet1);
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_SetEnumValue(handle[i], "TriggerMode", 0);
+        if (MV_OK != nRet[i])
+        {
+            printf("Set Enum Value fail! nRet [0x%x]\n", nRet[i]);
+        }
     }
 
     // Get payload size
     MVCC_INTVALUE stParam;
     memset(&stParam, 0, sizeof(MVCC_INTVALUE));
-    nRet = MV_CC_GetIntValue(handle1, "PayloadSize", &stParam);
+    nRet[0] = MV_CC_GetIntValue(handle[0], "PayloadSize", &stParam);
     g_nPayloadSize = stParam.nCurValue;
 
-    nRet1 = MV_CC_StartGrabbing(handle1);
-    nRet2 = MV_CC_StartGrabbing(handle2);
-    if ((MV_OK != nRet1) || (MV_OK != nRet2))
-    {
-        printf("Start Grabbing fail! nRet [0x%x]\n", nRet1);
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_StartGrabbing(handle[i]);
+        if (MV_OK != nRet[i])
+        {
+            printf("Start Grabbing fail! nRet [0x%x]\n", nRet[i]);
+        }
     }
 
-    memset(&stImageInfo1, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    memset(&stImageInfo2, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    pData1 = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
-    pData2 = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        memset(&stImageInfo[i], 0, sizeof(MV_FRAME_OUT_INFO_EX));
+        pData[i] = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
+    }
 }
 
-void plotModel(Mat& image, PoseInformation Pose) {
+void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters) {
     axesPoints.clear();
     imagePoints.clear();
     for (int i = 66; i < 71; i++)
@@ -338,7 +352,7 @@ void plotModel(Mat& image, PoseInformation Pose) {
     for (int i = 129; i >= 66; i -= 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     
-    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     for (int i = 0; i < axesPoints.size() - 1; i++) {
         line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 200), 3);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
@@ -348,7 +362,7 @@ void plotModel(Mat& image, PoseInformation Pose) {
     axesPoints.clear();
     for (int i = 0; i < Pose.tracking_points.size(); i++)
         axesPoints.push_back(Pose.tracking_points[i]);
-    projectPoints(axesPoints, Pose.rotation, Pose.translation, CamIntrinsicLeft, DistCoeffLeft, imagePoints);
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
 
     imshow("image_pose", image);
@@ -375,8 +389,7 @@ int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
     return MV_OK;
 }
 
-// convert data stream in Mat format
-cv::Mat Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData)
+cv::Mat Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData)   // convert data stream in Mat format
 {
     cv::Mat srcImage;
     if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)

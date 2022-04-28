@@ -1,0 +1,26 @@
+%YAML:1.0
+---
+cameraNumber: 1
+imageWidth: 1920
+imageHeight: 1200
+cameraMatrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 2.1858637210732400e+03, 0., 9.5202235009937306e+02, 0.,
+       2.1865873532949599e+03, 5.6387534865488101e+02, 0., 0., 1. ]
+distCoeffs: !!opencv-matrix
+   rows: 5
+   cols: 1
+   dt: d
+   data: [-0.170085848625626, 0.203029010848620, 0, 0, 0 ]
+Rotation: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
+Translation: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 0, 0, 0 ]

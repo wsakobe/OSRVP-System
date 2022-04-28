@@ -169,6 +169,7 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
             }
             matrix_number++;
         }
+        if (matrix_number > 5) break;
     }
     
     /*

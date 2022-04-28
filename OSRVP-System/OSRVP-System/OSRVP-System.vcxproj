@@ -80,12 +80,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\opencv\opencv\build\include\opencv2;D:\opencv\opencv\build\include;D:\yaml-cpp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\opencv\opencv\build\x64\vc15\lib;D:\yaml-cpp\build\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\opencv\opencv\build\include\opencv2;D:\opencv\opencv\build\include;D:\eigen-3.4.0\eigen-3.4.0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\opencv\opencv\build\x64\vc15\lib;C:\Program Files %28x86%29\MVS\Development\Libraries\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\opencv\opencv\build\include;D:\opencv\opencv\build\include\opencv2;F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib;$(IncludePath)</IncludePath>
+    <IncludePath>D:\eigen-3.4.0\eigen-3.4.0;D:\opencv\opencv\build\include;D:\opencv\opencv\build\include\opencv2;F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib;$(IncludePath)</IncludePath>
     <LibraryPath>D:\opencv\opencv\build\x64\vc15\lib;F:\OSRVP-System\OSRVP-System\OSRVP-System\ThirdLib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -123,11 +123,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Program Files %28x86%29\MVS\Development\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world453d.lib;yaml-cppd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world453d.lib;MvCameraControl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
