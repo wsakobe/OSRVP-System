@@ -67,18 +67,16 @@ void WorkThread(void* handle[5]) {
             if (nRet[i] == MV_OK)
             {
                 image = Convert2Mat(stImageInfo[i]);
-                imshow("image", image);
-                waitKey(1);
-                /*
+
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
                 //image_crop.copyTo(mask(roi));
                 //imshow("DynamicROI", mask);
                 //waitKey(1);
 
-                corner_pos_ID[i] = readMarker(image_crop);
+                corner_pos_ID.push_back(readMarker(image_crop));
 
-                if (corner_pos_ID.size() < 4) {
+                if (corner_pos_ID[i].size() < 4) {
                     cout << "Not enough corners!" << endl;
                     imshow("image_pose", image);
                     waitKey(1);
@@ -91,7 +89,7 @@ void WorkThread(void* handle[5]) {
                 }
 
                 for (int j = 0; j < corner_pos_ID[i].size(); j++)
-                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);*/
+                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
             }
             nRet[i] = MV_CC_FreeImageBuffer(handle[i], &stImageInfo[i]);
             if (nRet != MV_OK)
@@ -102,12 +100,12 @@ void WorkThread(void* handle[5]) {
             cout << start_time - last_time << endl;
             last_time = start_time;
         }
-        //PoseEstimation pE;
-        //Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
+        PoseEstimation pE;
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
         //dynamicROI(Pose, camera_parameters);
 
-        //plotModel(image, Pose, camera_parameters);
+        plotModel(image, Pose, camera_parameters);
 
         if (g_bExit)
         {
@@ -123,36 +121,36 @@ int main(int argc, char* argv[]) {
     //工业相机实时视频流
     if (!initCamera()) return 0;
     
-    std::thread thread_1(WorkThread, handle);
-    thread_1.detach();
+    do {
+        std::thread thread_1(WorkThread, handle);
+        thread_1.detach();
 
 #pragma region AfterThread
 
-     printf("Press [ Esc ] to stop grabbing.\n");
-     WaitForKeyPress();
-        
-    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-        nRet[i] = MV_CC_CloseDevice(handle[i]);
-        if (MV_OK != nRet[i])
-        {
-            printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
-            break;
-        }
-    }
-    // Destroy handle
-    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-        nRet[i] = MV_CC_DestroyHandle(handle[i]);
-        if (MV_OK != nRet[i])
-        {
-            printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
-            break;
-        }
-    }
-    printf("Device successfully closed.\n");
-        
-#pragma endregion       
+        printf("Press [ Esc ] to stop grabbing.\n");
+        WaitForKeyPress();
 
-    
+        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+            nRet[i] = MV_CC_CloseDevice(handle[i]);
+            if (MV_OK != nRet[i])
+            {
+                printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
+                break;
+            }
+        }
+        // Destroy handle
+        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+            nRet[i] = MV_CC_DestroyHandle(handle[i]);
+            if (MV_OK != nRet[i])
+            {
+                printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
+                break;
+            }
+        }
+        printf("Device successfully closed.\n");
+    } while (0);
+
+#pragma endregion
     
     //视频流处理
     /*
@@ -208,9 +206,9 @@ int main(int argc, char* argv[]) {
 }
 
 vector<corner_pos_with_ID> readMarker(Mat& image) {
-    //cvtColor(image, image_gray, COLOR_BGR2GRAY);
-    image_gray = image;
+    image_gray = image.clone();
     image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
+
     corner_pos_ID.clear();
 
     ImgParams.height = image_gray.rows;
@@ -412,7 +410,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         axesPoints.push_back(Pose.tracking_points[i]);
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
-    cout << imagePoints[0] << endl;
+    
     imshow("image_pose", image);
     waitKey(1);
 }
@@ -448,8 +446,6 @@ cv::Mat Convert2Mat(MV_FRAME_OUT& pstImage)   // convert data stream in Mat form
     {
         srcImage = cv::Mat(pstImage.stFrameInfo.nHeight, pstImage.stFrameInfo.nWidth, CV_8UC3, pstImage.pBufAddr);
     }
-
-    waitKey(1);
 
     return srcImage;
 }
