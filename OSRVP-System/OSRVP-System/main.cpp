@@ -98,6 +98,9 @@ void WorkThread(void* handle[5]) {
             {
                 printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
             }
+            start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            cout << start_time - last_time << endl;
+            last_time = start_time;
         }
         //PoseEstimation pE;
         //Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
@@ -119,41 +122,38 @@ int main(int argc, char* argv[]) {
 
     //工业相机实时视频流
     if (!initCamera()) return 0;
-    while (1) {
-        std::thread thread_1(WorkThread, handle);
-        thread_1.detach();
+    
+    std::thread thread_1(WorkThread, handle);
+    thread_1.detach();
 
 #pragma region AfterThread
 
-        printf("Press [ Esc ] to stop grabbing.\n");
-        WaitForKeyPress();
+     printf("Press [ Esc ] to stop grabbing.\n");
+     WaitForKeyPress();
         
-        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_CloseDevice(handle[i]);
-            if (MV_OK != nRet[i])
-            {
-                printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
-                break;
-            }
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_CloseDevice(handle[i]);
+        if (MV_OK != nRet[i])
+        {
+            printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
+            break;
         }
-        // Destroy handle
-        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_DestroyHandle(handle[i]);
-            if (MV_OK != nRet[i])
-            {
-                printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
-                break;
-            }
+    }
+    // Destroy handle
+    for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+        nRet[i] = MV_CC_DestroyHandle(handle[i]);
+        if (MV_OK != nRet[i])
+        {
+            printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
+            break;
         }
-        printf("Device successfully closed.\n");
+    }
+    printf("Device successfully closed.\n");
         
 #pragma endregion       
 
-        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << start_time - last_time << endl;
-        last_time = start_time;
-    }
-
+    
+    
     //视频流处理
     /*
     VideoCapture capture;
