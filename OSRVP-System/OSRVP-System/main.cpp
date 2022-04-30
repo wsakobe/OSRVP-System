@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <process.h>
 #include <conio.h>
+#include <thread>
 #include "mvcameracontrol.h"
 
 using namespace cv;
@@ -26,6 +27,7 @@ PoseInformation Pose;
 DynamicROIBox Box[5];
 int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
 int BoxBorder = 10;
+bool g_bExit = false;
 
 //HikVision Camera Preparation
 int nRet[5] = { MV_OK };
@@ -33,58 +35,41 @@ void* handle[5] = { NULL };
 unsigned char* pData[5];
 unsigned int g_nPayloadSize = 0;
 MV_FRAME_OUT_INFO_EX* imageInfo;
-Mat Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData);
+Mat Convert2Mat(MV_FRAME_OUT& pstImageInfo);
 MV_CC_DEVICE_INFO_LIST stDeviceList;
-MV_FRAME_OUT_INFO_EX stImageInfo[5] = { { 0 } };
+MV_FRAME_OUT stImageInfo[5] = { { 0 } };
 
 Mat image, image_crop, image_gray;
 vector<Point3f> axesPoints;
 vector<Point2f> imagePoints;
 
 void initModel();
-void initCamera();
+bool initCamera();
 vector<corner_pos_with_ID> readMarker(Mat& image);
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters);
 void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters);
 
 int start_time, last_time = 0;
 
-int main(int argc, char* argv[]) {
-    initModel();  
+void WaitForKeyPress(void)
+{
+    while (!_kbhit())
+    {
+        waitKey(10);
+    }
+    if (_getch() == 27) g_bExit = true;
+}
 
-    //工业相机实时视频流
-    /*
-    initCamera();
+void WorkThread(void* handle[5]) {
     while (1) {
-        if (kbhit()) {
-            char ch = getch();
-            if (ch == 27) {
-                for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-                    nRet[i] = MV_CC_CloseDevice(handle[i]);
-                    if (MV_OK != nRet[i])
-                    {
-                        printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
-                        break;
-                    }
-                }
-                // Destroy handle
-                for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-                    nRet[i] = MV_CC_DestroyHandle(handle[i]);
-                    if (MV_OK != nRet[i])
-                    {
-                        printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
-                        break;
-                    }
-                }              
-                printf("Device successfully closed.\n");
-                break;
-            }
-            ch = 0;
-        }
         for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_GetOneFrameTimeout(handle[i], pData[i], g_nPayloadSize, &stImageInfo[i], 100);
-            if (MV_OK == nRet[i]){
-                image = Convert2Mat(&stImageInfo[i], pData[i]);
+            nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
+            if (nRet[i] == MV_OK)
+            {
+                image = Convert2Mat(stImageInfo[i]);
+                imshow("image", image);
+                waitKey(1);
+                /*
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
                 //image_crop.copyTo(mask(roi));
@@ -92,10 +77,10 @@ int main(int argc, char* argv[]) {
                 //waitKey(1);
 
                 corner_pos_ID[i] = readMarker(image_crop);
-                
+
                 if (corner_pos_ID.size() < 4) {
                     cout << "Not enough corners!" << endl;
-                    imshow("image_pose_pnp", image);
+                    imshow("image_pose", image);
                     waitKey(1);
                     if (++Box[i].lostFrame > 5) {
                         Box[i].position = Point(0, 0);
@@ -106,37 +91,84 @@ int main(int argc, char* argv[]) {
                 }
 
                 for (int j = 0; j < corner_pos_ID[i].size(); j++)
-                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
+                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);*/
+            }
+            nRet[i] = MV_CC_FreeImageBuffer(handle[i], &stImageInfo[i]);
+            if (nRet != MV_OK)
+            {
+                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
             }
         }
+        //PoseEstimation pE;
+        //Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
-        PoseEstimation pE;
-        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
+        //dynamicROI(Pose, camera_parameters);
 
-        Box = dynamicROI(Pose, camera_parameters);
+        //plotModel(image, Pose, camera_parameters);
 
-        plotModel(image, Pose);
-
-        last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << last_time - start_time << endl;
+        if (g_bExit)
+        {
+            break;
+        }
     }
-    */
+    
+}
+
+int main(int argc, char* argv[]) {
+    initModel();
+
+    //工业相机实时视频流
+    if (!initCamera()) return 0;
+    while (1) {
+        std::thread thread_1(WorkThread, handle);
+        thread_1.detach();
+
+#pragma region AfterThread
+
+        printf("Press [ Esc ] to stop grabbing.\n");
+        WaitForKeyPress();
+        
+        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+            nRet[i] = MV_CC_CloseDevice(handle[i]);
+            if (MV_OK != nRet[i])
+            {
+                printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
+                break;
+            }
+        }
+        // Destroy handle
+        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+            nRet[i] = MV_CC_DestroyHandle(handle[i]);
+            if (MV_OK != nRet[i])
+            {
+                printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
+                break;
+            }
+        }
+        printf("Device successfully closed.\n");
+        
+#pragma endregion       
+
+        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        cout << start_time - last_time << endl;
+        last_time = start_time;
+    }
 
     //视频流处理
+    /*
     VideoCapture capture;
     image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
+    //image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
     if (!capture.isOpened())
     {
         printf("can not open ...\n");
         return -1;
     }
     capture.read(image);
-    Box[0].height = image.rows;
-    Box[0].width = image.cols;
     stDeviceList.nDeviceNum = 1;
-    while (capture.read(image)) {    
+    while (capture.read(image)) {
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << start_time - last_time << endl;
+        cout << 1000.0 / (start_time - last_time) << endl;
         last_time = start_time;
         
         //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
@@ -147,7 +179,9 @@ int main(int argc, char* argv[]) {
         //waitKey(1);
 
         corner_pos_ID.push_back(readMarker(image_crop));
+        //corner_pos_ID.push_back(readMarker(image_crop));
 
+        cout << corner_pos_ID[0].size() << endl;
         if (corner_pos_ID[0].size() < 4) {
             cout << "Not enough corners!" << endl;
             imshow("image_pose", image);
@@ -168,13 +202,14 @@ int main(int argc, char* argv[]) {
 
         plotModel(image, Pose, camera_parameters);
     }
-    
+    */
     destroyAllWindows();
     return 0;
 }
 
 vector<corner_pos_with_ID> readMarker(Mat& image) {
-    cvtColor(image, image_gray, COLOR_BGR2GRAY);
+    //cvtColor(image, image_gray, COLOR_BGR2GRAY);
+    image_gray = image;
     image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
     corner_pos_ID.clear();
 
@@ -277,6 +312,8 @@ void initModel() {
     fs["imageHeight"] >> ImgParams.height;
 
     for (int i = 0; i < camera_number; i++) {
+        Box[i].height = ImgParams.height;
+        Box[i].width = ImgParams.width;
         fs["cameraMatrix"] >> cam.Intrinsic;
         fs["distCoeffs"] >> cam.Distortion;
         fs["Rotation"] >> cam.Rotation;
@@ -287,13 +324,19 @@ void initModel() {
     fs.release();    	//close the file opened
 }
 
-void initCamera() {
+bool initCamera() {
     memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
     nRet[0] = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
     if (MV_OK != nRet[0])
     {
         printf("Enum Devices fail! nRet [0x%x]\n", nRet[0]);
+        return false;
+    }
+
+    if (stDeviceList.nDeviceNum == 0) {
+        printf("There is no device available.\n");
+        return false;
     }
 
     for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
@@ -301,6 +344,7 @@ void initCamera() {
         if (MV_OK != nRet[i])
         {
             printf("Create Handle fail! nRet [0x%x]\n", nRet[i]);
+            return false;
         }
     }
 
@@ -309,6 +353,7 @@ void initCamera() {
         if (MV_OK != nRet[i])
         {
             printf("Open Device fail! nRet [0x%x]\n", nRet[i]);
+            return false;
         }
     }      
 
@@ -317,6 +362,7 @@ void initCamera() {
         if (MV_OK != nRet[i])
         {
             printf("Set Enum Value fail! nRet [0x%x]\n", nRet[i]);
+            return false;
         }
     }
 
@@ -331,13 +377,15 @@ void initCamera() {
         if (MV_OK != nRet[i])
         {
             printf("Start Grabbing fail! nRet [0x%x]\n", nRet[i]);
+            return false;
         }
     }
-
     for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
         memset(&stImageInfo[i], 0, sizeof(MV_FRAME_OUT_INFO_EX));
         pData[i] = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
     }
+
+    return true;
 }
 
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters) {
@@ -364,7 +412,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         axesPoints.push_back(Pose.tracking_points[i]);
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
-
+    cout << imagePoints[0] << endl;
     imshow("image_pose", image);
     waitKey(1);
 }
@@ -389,19 +437,19 @@ int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
     return MV_OK;
 }
 
-cv::Mat Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData)   // convert data stream in Mat format
+cv::Mat Convert2Mat(MV_FRAME_OUT& pstImage)   // convert data stream in Mat format
 {
     cv::Mat srcImage;
-    if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
+    if (pstImage.stFrameInfo.enPixelType == PixelType_Gvsp_Mono8)
     {
-        srcImage = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, pData);
+        srcImage = cv::Mat(pstImage.stFrameInfo.nHeight, pstImage.stFrameInfo.nWidth, CV_8UC1, pstImage.pBufAddr);
     }
-    else if (pstImageInfo->enPixelType == PixelType_Gvsp_RGB8_Packed)
+    else if (pstImage.stFrameInfo.enPixelType == PixelType_Gvsp_RGB8_Packed)
     {
-        srcImage = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, pData);
+        srcImage = cv::Mat(pstImage.stFrameInfo.nHeight, pstImage.stFrameInfo.nWidth, CV_8UC3, pstImage.pBufAddr);
     }
 
-    cv::waitKey(20);
+    waitKey(1);
 
     return srcImage;
 }

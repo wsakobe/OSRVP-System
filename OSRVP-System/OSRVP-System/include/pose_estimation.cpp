@@ -26,7 +26,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 				continue;
 			}
 		}
-	if (registrated_point_cnt > 10) {
+	if (registrated_point_cnt > 8) {
 		triangulation(imgpts1, imgpts2, pts2, camera_parameters[camera_number[0]], camera_parameters[camera_number[1]]);
 		Point3f p1, p2;
 		for (int i = 0; i < pts1.size(); i++) {
