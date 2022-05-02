@@ -51,8 +51,8 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 		putText(imgMark, s, corner_pos_ID[i].subpixel_pos + Point2f(2, 2), FONT_HERSHEY_SIMPLEX, 0.3, Scalar(0, 255, 0), 1.8);
 	}
 	imshow("Identify", imgMark);
-	waitKey(1);*/
-	
+	waitKey(1);
+	*/
 	return corner_pos_ID;
 }
 
@@ -126,6 +126,7 @@ void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, ve
 				corner_temp.label = label;
 				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + 1;
 				corner_temp.subpixel_pos = cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel;
+				//if (corner_temp.ID == 12) cout << corner_temp.subpixel_pos << endl;
 				corner_pos_ID.push_back(corner_temp);
 			}			
 		}

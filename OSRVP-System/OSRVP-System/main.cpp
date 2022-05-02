@@ -67,7 +67,7 @@ void WorkThread(void* handle[5]) {
             if (nRet[i] == MV_OK)
             {
                 image = Convert2Mat(stImageInfo[i]);
-               
+                imwrite("image.bmp", image);
                 //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
@@ -78,7 +78,7 @@ void WorkThread(void* handle[5]) {
                 corner_pos_ID.push_back(readMarker(image_crop));
 
                 if (corner_pos_ID[i].size() < 4) {
-                    cout << "Not enough corners!" << endl;
+                    //cout << "Not enough corners!" << endl;
                     imshow("image_pose", image);
                     waitKey(1);
                     if (++Box[i].lostFrame > 5) {
@@ -98,7 +98,7 @@ void WorkThread(void* handle[5]) {
                 printf("Free Image Buffer fail! nRet [0x%x]\n", nRet[i]);
             }
             start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            cout << 1000.0 / (start_time - last_time) << endl;
+            //cout << 1000.0 / (start_time - last_time) << endl;
             last_time = start_time;
         }
 
@@ -425,8 +425,8 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     for (int i = 0; i < Pose.tracking_points.size(); i++)
         axesPoints.push_back(Pose.tracking_points[i]);
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
-    circle(imgMark, imagePoints[0], 4, Scalar(120, 120, 0));
-    
+    circle(imgMark, imagePoints[0], 5, Scalar(250, 120, 0), -1);
+        
     imshow("image_pose", imgMark);
     waitKey(1);
 }

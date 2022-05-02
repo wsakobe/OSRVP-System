@@ -117,7 +117,7 @@ void FinalElection::subpixelRefinement(Mat& img, vector<cornerPreInfo> corners) 
         Scharr(img_neighbor, grad_neighbor_y, CV_32FC1, 0, 1);
         grad_neighbor_x = grad_neighbor_x.reshape(1, maskSurfaceL * maskSurfaceL);
         grad_neighbor_y = grad_neighbor_y.reshape(1, maskSurfaceL * maskSurfaceL);
-        hconcat(grad_neighbor_x, grad_neighbor_x, grad_neighbor);
+        hconcat(grad_neighbor_x, grad_neighbor_y, grad_neighbor);
 
         for (int j = 0; j < grad_neighbor.rows; j++) {
             grad_row = grad_neighbor.rowRange(j, j + 1);
@@ -127,6 +127,7 @@ void FinalElection::subpixelRefinement(Mat& img, vector<cornerPreInfo> corners) 
         }
 
         solve(grad_neighbor, B, subpixel, DECOMP_SVD);
+
         cur.point_in_subpixel.x = subpixel.at<float>(0, 0) + corners[i].corner_position.x - maskSurface;
         cur.point_in_subpixel.y = subpixel.at<float>(1, 0) + corners[i].corner_position.y - maskSurface;
         cornerPoints.push_back(cur);

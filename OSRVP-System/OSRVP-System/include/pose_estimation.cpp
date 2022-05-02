@@ -76,8 +76,9 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
-	Mat end_effector = (Mat_<double>(3, 1) << 29.9093, 212.3799, 369);
-	end_effector = R * end_effector + tvec;
+	Mat end_effector = (Mat_<double>(3, 1) << -270.9093, -10, 560);
+	//end_effector = R * end_effector + tvec;
+	cout << R * end_effector + tvec << endl;
 
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
@@ -91,6 +92,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	for (int i = 0; i < imagePoints.size(); i++)
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	cout << reprojection_error / imagePoints.size() << endl;*/
+
 	Pose6D.recovery = true;
 }
 
