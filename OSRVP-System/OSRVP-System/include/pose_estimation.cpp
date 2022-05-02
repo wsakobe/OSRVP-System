@@ -4,11 +4,13 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 {
 	int number_enough_corners = 0;
 	int enough_number[5] = { 0 };
+	Pose6D.recovery = false;
 	for (int i = 0; i < camera_num; i++) {
 		if (corner_set[i].size() > 8) {
 			enough_number[number_enough_corners++] = i;
 		}
 	}
+	if (number_enough_corners == 0) return Pose6D;
 	if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D, enough_number[0]);
 	if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D, enough_number);
 
@@ -59,6 +61,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 
 		Rodrigues(R, rvec);
 	}
+	Pose6D.recovery = true;
 }
 
 void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3], int camera_number)
@@ -83,10 +86,12 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, rvec, tvec, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, imagePoints);
 
+	/*
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++)
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
-	//cout << reprojection_error / imagePoints.size() << endl;
+	cout << reprojection_error / imagePoints.size() << endl;*/
+	Pose6D.recovery = true;
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)

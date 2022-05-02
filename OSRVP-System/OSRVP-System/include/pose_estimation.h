@@ -4,9 +4,12 @@
 #include "identify_marker.h"
 #include <Eigen/Dense>
 
+#define maxLostFrame 5
+
 struct PoseInformation {
 	Mat rotation, translation;
 	vector<Point3f> tracking_points;
+	bool recovery = false;
 };
 
 struct DynamicROIBox {

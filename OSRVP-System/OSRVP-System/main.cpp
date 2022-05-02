@@ -17,7 +17,7 @@ valueMatrix value_matrix[1025];
 float model_3D[number_of_corner_x * number_of_corner_y][3];
 int dot_matrix[number_of_corner_x][number_of_corner_y];
 
-imageParams ImgParams;
+imageParams ImgParams, ImgParamsOri;
 vector<cornerPreInfo> candidate_corners;
 vector<cornerInformation> cornerPoints;
 vector<corner_pos_with_ID> corner_pos;
@@ -67,7 +67,8 @@ void WorkThread(void* handle[5]) {
             if (nRet[i] == MV_OK)
             {
                 image = Convert2Mat(stImageInfo[i]);
-
+               
+                //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
                 //image_crop.copyTo(mask(roi));
@@ -92,18 +93,19 @@ void WorkThread(void* handle[5]) {
                     corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
             }
             nRet[i] = MV_CC_FreeImageBuffer(handle[i], &stImageInfo[i]);
-            if (nRet != MV_OK)
+            if (nRet[i] != MV_OK)
             {
-                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
+                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet[i]);
             }
             start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            cout << start_time - last_time << endl;
+            cout << 1000.0 / (start_time - last_time) << endl;
             last_time = start_time;
         }
+
         PoseEstimation pE;
         Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
-        //dynamicROI(Pose, camera_parameters);
+        dynamicROI(Pose, camera_parameters);
 
         plotModel(image, Pose, camera_parameters);
 
@@ -232,6 +234,16 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
 }
 
 void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
+    if (!Pose.recovery){
+        for (int num = 0; num < stDeviceList.nDeviceNum; num++) {
+            if (++Box[num].lostFrame > maxLostFrame) {
+                Box[num].position = Point(0, 0);
+                Box[num].height = ImgParamsOri.height;
+                Box[num].width = ImgParamsOri.width;
+            }
+        }            
+        return;
+    }
     axesPoints.clear();
     while (cnt < number_of_corner_x * number_of_corner_y) {
         if ((model_3D[cnt][0] - 0.0 > 1e-3) || (model_3D[cnt][1] - 0.0 > 1e-3) || (model_3D[cnt][2] - 0.0 > 1e-3))
@@ -306,12 +318,12 @@ void initModel() {
     FileStorage fs(cameraParametersName, FileStorage::READ);
 
     fs["cameraNumber"] >> camera_number;
-    fs["imageWidth"] >> ImgParams.width;
-    fs["imageHeight"] >> ImgParams.height;
+    fs["imageWidth"] >> ImgParamsOri.width;
+    fs["imageHeight"] >> ImgParamsOri.height;
 
     for (int i = 0; i < camera_number; i++) {
-        Box[i].height = ImgParams.height;
-        Box[i].width = ImgParams.width;
+        Box[i].height = ImgParamsOri.height;
+        Box[i].width = ImgParamsOri.width;
         fs["cameraMatrix"] >> cam.Intrinsic;
         fs["distCoeffs"] >> cam.Distortion;
         fs["Rotation"] >> cam.Rotation;
@@ -387,20 +399,24 @@ bool initCamera() {
 }
 
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters) {
+    if (!Pose.recovery) return;
+    Mat imgMark(image.rows, image.cols, CV_32FC3);
+    cvtColor(image, imgMark, COLOR_GRAY2RGB);
+    
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 66; i < 71; i++)
+    for (int i = 37; i < 42; i++)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 70; i < 134; i += 7)
+    for (int i = 42; i < 63; i += 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 133; i >= 129; i--)
+    for (int i = 63; i >= 58; i--)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 129; i >= 66; i -= 7)
+    for (int i = 58; i >= 37; i -= 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
-    for (int i = 0; i < axesPoints.size() - 1; i++) {
-        line(image, imagePoints[i], imagePoints[i + 1], Scalar(0, 100, 200), 3);
+    for (int i = 1; i < axesPoints.size(); i++) {
+        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 100, 200), 3);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
     
@@ -409,9 +425,9 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     for (int i = 0; i < Pose.tracking_points.size(); i++)
         axesPoints.push_back(Pose.tracking_points[i]);
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
-    circle(image, imagePoints[0], 4, Scalar(120, 120, 0));
+    circle(imgMark, imagePoints[0], 4, Scalar(120, 120, 0));
     
-    imshow("image_pose", image);
+    imshow("image_pose", imgMark);
     waitKey(1);
 }
 

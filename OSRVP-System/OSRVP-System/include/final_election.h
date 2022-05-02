@@ -44,7 +44,7 @@ private:
 	
 	double result;
 	float angle1, angle2, edge_angle, direction_angle;
-	float lamda = 1, template_response_score_max = -1.0, hessian_response_score_max = 0, T_response = 0.25, T_temp_max = 0.8;
+	float lamda = 1, template_response_score_max = -1.0, hessian_response_score_max = 0, T_response = 0.3, T_temp_max = 0.85;
 
 	cornerInformation cur;	
 };
