@@ -3,8 +3,9 @@
 
 #include "identify_marker.h"
 #include <Eigen/Dense>
+#include <fstream>
 
-#define maxLostFrame 5
+#define maxLostFrame 3
 
 struct PoseInformation {
 	Mat rotation, translation;

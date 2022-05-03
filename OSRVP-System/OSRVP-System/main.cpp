@@ -1,5 +1,4 @@
 #include "include/pose_estimation.h"
-#include <fstream>
 #include <algorithm>
 #include <process.h>
 #include <conio.h>
@@ -66,27 +65,22 @@ void WorkThread(void* handle[5]) {
             nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
             if (nRet[i] == MV_OK)
             {
+                cout << Box[i].position << ' ' << Box[i].height << ' ' << Box[i].width << endl; 
                 image = Convert2Mat(stImageInfo[i]);
                 imwrite("image.bmp", image);
-                //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
+                Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
-                //image_crop.copyTo(mask(roi));
-                //imshow("DynamicROI", mask);
-                //waitKey(1);
-
+                image_crop.copyTo(mask(roi));
+                imshow("DynamicROI", mask);
+                waitKey(1);
+                
                 corner_pos_ID.push_back(readMarker(image_crop));
 
                 if (corner_pos_ID[i].size() < 4) {
                     //cout << "Not enough corners!" << endl;
                     imshow("image_pose", image);
                     waitKey(1);
-                    if (++Box[i].lostFrame > 5) {
-                        Box[i].position = Point(0, 0);
-                        Box[i].height = image.rows;
-                        Box[i].width = image.cols;
-                    }
-                    continue;
                 }
 
                 for (int j = 0; j < corner_pos_ID[i].size(); j++)
@@ -244,6 +238,7 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
         }            
         return;
     }
+    cout << "OK" << endl;
     axesPoints.clear();
     while (cnt < number_of_corner_x * number_of_corner_y) {
         if ((model_3D[cnt][0] - 0.0 > 1e-3) || (model_3D[cnt][1] - 0.0 > 1e-3) || (model_3D[cnt][2] - 0.0 > 1e-3))
@@ -264,8 +259,8 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
             if (ceil(imagePoints[i].y) > y_max) y_max = ceil(imagePoints[i].y);
         }
         Box[num].position = Point(max(0, x_min - BoxBorder), max(0, y_min - BoxBorder));
-        Box[num].width = x_max - x_min + BoxBorder * 2;
-        Box[num].height  = y_max - y_min + BoxBorder * 2;
+        Box[num].width = min(x_max - x_min + BoxBorder * 2, ImgParamsOri.width - Box[num].position.x);
+        Box[num].height = min(y_max - y_min + BoxBorder * 2, ImgParamsOri.height - Box[num].position.y);
         Box[num].lostFrame = 0;
     }
 }

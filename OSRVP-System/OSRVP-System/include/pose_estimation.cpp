@@ -72,13 +72,23 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	}
 	undistortPoints(image_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, noArray(), camera_parameters[camera_number].Intrinsic);
 
-	solvePnPRansac(world_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, rvec, tvec, false, 50, 1, 0.99, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, rvec, tvec, false, 200, 0.5, 0.9, noArray(), SOLVEPNP_EPNP);
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
 	Mat end_effector = (Mat_<double>(3, 1) << -270.9093, -10, 560);
 	//end_effector = R * end_effector + tvec;
-	cout << R * end_effector + tvec << endl;
+	char fname[256];
+	sprintf(fname, "rot.txt");
+	ofstream Files;
+	Files.open(fname, ios::app);
+	Files << R << endl;
+	Files.close();
+
+	sprintf(fname, "end.txt");
+	Files.open(fname, ios::app);
+	Files << R * end_effector + tvec << endl;
+	Files.close();
 
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
@@ -87,11 +97,10 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, rvec, tvec, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, imagePoints);
 
-	/*
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++)
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
-	cout << reprojection_error / imagePoints.size() << endl;*/
+	cout << reprojection_error / imagePoints.size() << endl;
 
 	Pose6D.recovery = true;
 }
