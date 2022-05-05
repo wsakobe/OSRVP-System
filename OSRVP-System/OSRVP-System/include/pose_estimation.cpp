@@ -19,12 +19,14 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 
 void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5])
 {
+	registrated_point_cnt = 0;
 	for (int i = 0; i < corner_set[camera_number[0]].size(); i++)
 		for (int j = 0; j < corner_set[camera_number[1]].size(); j++) {
 			if (corner_set[camera_number[0]][i].ID == corner_set[camera_number[1]][j].ID) {
 				imgpts1.push_back(corner_set[camera_number[0]][i].subpixel_pos);
 				imgpts2.push_back(corner_set[camera_number[1]][j].subpixel_pos);
 				pts1.push_back(Point3f(model_3D[corner_set[camera_number[0]][i].ID][0], model_3D[corner_set[camera_number[0]][i].ID][1], model_3D[corner_set[camera_number[0]][i].ID][2]));
+				registrated_point_cnt++;
 				continue;
 			}
 		}
@@ -60,8 +62,13 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		tvec = pm2 - R * pm1;
 
 		Rodrigues(R, rvec);
+
+		Pose6D.rotation = rvec;
+		Pose6D.translation = tvec;
+		Pose6D.tracking_points.push_back(Point3d(end_effector.at<double>(0, 0), end_effector.at<double>(1, 0), end_effector.at<double>(2, 0)));
+		Pose6D.recovery = true;
 	}
-	Pose6D.recovery = true;
+	
 }
 
 void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3], int camera_number)
@@ -76,7 +83,6 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
-	Mat end_effector = (Mat_<double>(3, 1) << -270.9093, -10, 560);
 	//end_effector = R * end_effector + tvec;
 	char fname[256];
 	sprintf(fname, "rot.txt");
@@ -90,6 +96,11 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Files << R * end_effector + tvec << endl;
 	Files.close();
 
+	sprintf(fname, "trans.txt");
+	Files.open(fname, ios::app);
+	Files << tvec << endl;
+	Files.close();
+
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
 	Pose6D.tracking_points.push_back(Point3d(end_effector.at<double>(0, 0), end_effector.at<double>(1, 0), end_effector.at<double>(2, 0)));
@@ -101,7 +112,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	for (int i = 0; i < imagePoints.size(); i++)
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	cout << reprojection_error / imagePoints.size() << endl;
-
+	
 	Pose6D.recovery = true;
 }
 
@@ -110,18 +121,16 @@ void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, cons
 	if (!points_left.size())
 		return;
 
-	Mat mLeftRotation = Mat::eye(3, 3, CV_64F);
-	Mat mLeftTranslation = Mat::zeros(3, 1, CV_64F);
 	Mat mLeftRT = Mat(3, 4, CV_64F);    //左相机M矩阵
-	hconcat(mLeftRotation, mLeftTranslation, mLeftRT);
+	hconcat(camera_parameter1.Rotation, camera_parameter1.Translation, mLeftRT);
 	Mat mLeftM = camera_parameter1.Intrinsic * mLeftRT;
 
 	Mat mRightRT = Mat(3, 4, CV_64F);   //右相机M矩阵
 	hconcat(camera_parameter2.Rotation, camera_parameter2.Translation, mRightRT);
 	Mat mRightM = camera_parameter2.Intrinsic * mRightRT;
 
-	undistortPoints(points_left, points_left, camera_parameter1.Intrinsic, camera_parameter1.Distortion);
-	undistortPoints(points_right, points_right, camera_parameter2.Intrinsic, camera_parameter2.Distortion);
+	undistortPoints(points_left, points_left, camera_parameter1.Intrinsic, camera_parameter1.Distortion, noArray(), camera_parameter1.Intrinsic);
+	undistortPoints(points_right, points_right, camera_parameter2.Intrinsic, camera_parameter2.Distortion, noArray(), camera_parameter2.Intrinsic);
 
 	for (int i = 0; i < points_left.size(); i++) {
 		// 将像素坐标转换至相机坐标

@@ -45,6 +45,8 @@ private:
 
 	Mat pts_4d;
 	vector<Point2f> pts_1, pts_2;
+
+	Mat end_effector = (Mat_<double>(3, 1) << -270.9093, -10, 560);
 };
 
 class BundleAdjustment {

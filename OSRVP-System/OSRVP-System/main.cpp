@@ -61,27 +61,21 @@ void WaitForKeyPress(void)
 
 void WorkThread(void* handle[5]) {
     while (1) {
+        corner_pos_ID.clear();
         for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
             nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
             if (nRet[i] == MV_OK)
             {
-                cout << Box[i].position << ' ' << Box[i].height << ' ' << Box[i].width << endl; 
                 image = Convert2Mat(stImageInfo[i]);
-                imwrite("image.bmp", image);
-                Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
+
+                //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
-                image_crop.copyTo(mask(roi));
-                imshow("DynamicROI", mask);
-                waitKey(1);
+                //image_crop.copyTo(mask(roi));
+                //imshow("DynamicROI", mask);
+                //waitKey(1);
                 
                 corner_pos_ID.push_back(readMarker(image_crop));
-
-                if (corner_pos_ID[i].size() < 4) {
-                    //cout << "Not enough corners!" << endl;
-                    imshow("image_pose", image);
-                    waitKey(1);
-                }
 
                 for (int j = 0; j < corner_pos_ID[i].size(); j++)
                     corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
@@ -99,7 +93,13 @@ void WorkThread(void* handle[5]) {
         PoseEstimation pE;
         Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
-        dynamicROI(Pose, camera_parameters);
+        if (!Pose.recovery) {
+            //cout << "Fail to localize the model!" << endl;
+            imshow("image_pose", image);
+            waitKey(1);
+        }
+
+        //dynamicROI(Pose, camera_parameters);
 
         plotModel(image, Pose, camera_parameters);
 
@@ -205,7 +205,7 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
     image_gray = image.clone();
     image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
 
-    corner_pos_ID.clear();
+    corner_pos.clear();
 
     ImgParams.height = image_gray.rows;
     ImgParams.width = image_gray.cols;
@@ -238,7 +238,6 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
         }            
         return;
     }
-    cout << "OK" << endl;
     axesPoints.clear();
     while (cnt < number_of_corner_x * number_of_corner_y) {
         if ((model_3D[cnt][0] - 0.0 > 1e-3) || (model_3D[cnt][1] - 0.0 > 1e-3) || (model_3D[cnt][2] - 0.0 > 1e-3))
@@ -316,16 +315,26 @@ void initModel() {
     fs["imageWidth"] >> ImgParamsOri.width;
     fs["imageHeight"] >> ImgParamsOri.height;
 
+    string cameraMatrix = "cameraMatrix";
+    string distCoeffs = "distCoeffs";
+    string Rotation = "Rotation";
+    string Translation = "Translation";
     for (int i = 0; i < camera_number; i++) {
+        memset((void*)&cam, 0x00, sizeof(cam));
         Box[i].height = ImgParamsOri.height;
         Box[i].width = ImgParamsOri.width;
-        fs["cameraMatrix"] >> cam.Intrinsic;
-        fs["distCoeffs"] >> cam.Distortion;
-        fs["Rotation"] >> cam.Rotation;
-        fs["Translation"] >> cam.Translation;
+        
+        string cameraMatrixi = cameraMatrix + to_string(i + 1);
+        string distCoeffsi = distCoeffs + to_string(i + 1);
+        string Rotationi = Rotation + to_string(i + 1);
+        string Translationi = Translation + to_string(i + 1);
+        
+        fs[cameraMatrixi] >> cam.Intrinsic;
+        fs[distCoeffsi] >> cam.Distortion;
+        fs[Rotationi] >> cam.Rotation;
+        fs[Translationi] >> cam.Translation;
         camera_parameters.push_back(cam);
     }
-
     fs.release();    	//close the file opened
 }
 

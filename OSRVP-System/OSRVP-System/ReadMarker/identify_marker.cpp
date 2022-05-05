@@ -5,8 +5,8 @@ using namespace cv;
 
 vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[30])
 {
-	Mat imgMark(img.rows, img.cols, CV_32FC3);
-	cvtColor(img, imgMark, COLOR_GRAY2RGB);
+	//Mat imgMark(img.rows, img.cols, CV_32FC3);
+	//cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 	corner_pos_ID.clear();

@@ -65,9 +65,11 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
 
     sort(edge_list_ID.begin(), edge_list_ID.end(), cmp);
     
-    if (edge_list_ID.size() > 0)  last_ID = edge_list_ID[0].x;
-    last_ID_pos = 0;
-    dist_min = edgeDistance2(cornerPoints[edge_list_ID[0].x].point_in_subpixel, cornerPoints[edge_list_ID[0].y].point_in_subpixel);
+    if (edge_list_ID.size() > 0) {
+        last_ID = edge_list_ID[0].x;
+        last_ID_pos = 0;
+        dist_min = edgeDistance2(cornerPoints[edge_list_ID[0].x].point_in_subpixel, cornerPoints[edge_list_ID[0].y].point_in_subpixel);
+    }
 
     for (int i = 0; i < edge_list_ID.size() - 1; i++)
     {
