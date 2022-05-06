@@ -21,10 +21,10 @@ struct DynamicROIBox {
 };
 
 struct CameraParams {
-	Mat Intrinsic = Mat::zeros(3, 3, CV_64FC1);
-	Mat Distortion = Mat::zeros(5, 1, CV_64FC1);
-	Mat Rotation = Mat::eye(3, 3, CV_64FC1);
-	Mat Translation = Mat::zeros(3, 1, CV_64FC1);
+	Mat Intrinsic = Mat::zeros(3, 3, CV_32FC1);
+	Mat Distortion = Mat::zeros(5, 1, CV_32FC1);
+	Mat Rotation = Mat::eye(3, 3, CV_32FC1);
+	Mat Translation = Mat::zeros(3, 1, CV_32FC1);
 };
 
 class PoseEstimation {

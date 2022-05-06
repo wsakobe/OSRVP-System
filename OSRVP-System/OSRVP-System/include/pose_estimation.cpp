@@ -22,7 +22,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 	registrated_point_cnt = 0;
 	for (int i = 0; i < corner_set[camera_number[0]].size(); i++)
 		for (int j = 0; j < corner_set[camera_number[1]].size(); j++) {
-			if (corner_set[camera_number[0]][i].ID == corner_set[camera_number[1]][j].ID) {
+			if ((corner_set[camera_number[0]][i].ID == corner_set[camera_number[1]][j].ID) && (model_3D[corner_set[camera_number[0]][i].ID][2] - 0.0 > 1e-2)) {
 				imgpts1.push_back(corner_set[camera_number[0]][i].subpixel_pos);
 				imgpts2.push_back(corner_set[camera_number[1]][j].subpixel_pos);
 				pts1.push_back(Point3f(model_3D[corner_set[camera_number[0]][i].ID][0], model_3D[corner_set[camera_number[0]][i].ID][1], model_3D[corner_set[camera_number[0]][i].ID][2]));
@@ -30,7 +30,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 				continue;
 			}
 		}
-	if (registrated_point_cnt > 5) {
+	if (registrated_point_cnt > 8) {
 		triangulation(imgpts1, imgpts2, pts2, camera_parameters[camera_number[0]], camera_parameters[camera_number[1]]);
 		Point3f p1, p2;
 		for (int i = 0; i < pts1.size(); i++) {
@@ -91,7 +91,6 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		Pose6D.rotation = rvec;
 		Pose6D.translation = tvec;
 		fs["TrackingPoint"] >> end_effector;
-		cout << end_effector << endl;
 		Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at <float> (2, 0)));
 		Pose6D.recovery = true;
 
@@ -164,11 +163,11 @@ void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, cons
 	if (!points_left.size())
 		return;
 
-	Mat mLeftRT = Mat(3, 4, CV_64F);    //左相机M矩阵
+	Mat mLeftRT = Mat(3, 4, CV_32FC1);    //左相机M矩阵
 	hconcat(camera_parameter1.Rotation, camera_parameter1.Translation, mLeftRT);
 	Mat mLeftM = camera_parameter1.Intrinsic * mLeftRT;
 
-	Mat mRightRT = Mat(3, 4, CV_64F);   //右相机M矩阵
+	Mat mRightRT = Mat(3, 4, CV_32FC1);   //右相机M矩阵
 	hconcat(camera_parameter2.Rotation, camera_parameter2.Translation, mRightRT);
 	Mat mRightM = camera_parameter2.Intrinsic * mRightRT;
 
@@ -202,7 +201,7 @@ Point2f PoseEstimation::pixel2cam(const Point2f& p, const Mat& K)
 {
 	return Point2f
 	(
-		(p.x - K.at<double>(0, 2)) / K.at<double>(0, 0),
-		(p.y - K.at<double>(1, 2)) / K.at<double>(1, 1)
+		(p.x - K.at<float>(0, 2)) / K.at<float>(0, 0),
+		(p.y - K.at<float>(1, 2)) / K.at<float>(1, 1)
 	);
 }

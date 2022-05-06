@@ -61,6 +61,10 @@ void WaitForKeyPress(void)
 
 void WorkThread(void* handle[5]) {
     while (1) {
+        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        cout << 1000.0 / (start_time - last_time) << endl;
+        last_time = start_time;
+
         corner_pos_ID.clear();
         for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
             nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
@@ -85,12 +89,9 @@ void WorkThread(void* handle[5]) {
             if (nRet[i] != MV_OK)
             {
                 printf("Free Image Buffer fail! nRet [0x%x]\n", nRet[i]);
-            }
-            start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            //cout << 1000.0 / (start_time - last_time) << endl;
-            last_time = start_time;
+            } 
         }
-
+        
         PoseEstimation pE;
         Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
         
@@ -99,10 +100,10 @@ void WorkThread(void* handle[5]) {
             imshow("image_pose", image_firstcam);
             waitKey(1);
         }
-        //dynamicROI(Pose, camera_parameters);
+        dynamicROI(Pose, camera_parameters);
 
         plotModel(image_firstcam, Pose, camera_parameters);
-
+                
         if (g_bExit)
         {
             break;
@@ -248,8 +249,12 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
     for (int num = 0; num < stDeviceList.nDeviceNum; num++) {
         cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
         imagePoints.clear();
-
-        projectPoints(axesPoints, camera_parameters[num].Rotation * Pose.rotation, camera_parameters[num].Rotation * Pose.translation + camera_parameters[num].Translation, camera_parameters[num].Intrinsic, camera_parameters[num].Distortion, imagePoints);
+        Mat Rot = Mat::zeros(3, 3, CV_32FC1);
+        Rodrigues(Pose.rotation, Rot);
+        Rot = camera_parameters[num].Rotation * Rot;
+        Mat rvec = Mat::zeros(3, 1, CV_32FC1);
+        Rodrigues(Rot, rvec);
+        projectPoints(axesPoints, rvec, camera_parameters[num].Rotation * Pose.translation + camera_parameters[num].Translation, camera_parameters[num].Intrinsic, camera_parameters[num].Distortion, imagePoints);
 
         for (int i = 0; i < imagePoints.size(); i++) {
             if (floor(imagePoints[i].x) < x_min) x_min = floor(imagePoints[i].x);
