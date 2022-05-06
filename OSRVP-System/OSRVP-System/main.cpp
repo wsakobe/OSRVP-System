@@ -38,7 +38,7 @@ Mat Convert2Mat(MV_FRAME_OUT& pstImageInfo);
 MV_CC_DEVICE_INFO_LIST stDeviceList;
 MV_FRAME_OUT stImageInfo[5] = { { 0 } };
 
-Mat image, image_crop, image_gray;
+Mat image, image_crop, image_gray, image_firstcam;
 vector<Point3f> axesPoints;
 vector<Point2f> imagePoints;
 
@@ -67,6 +67,7 @@ void WorkThread(void* handle[5]) {
             if (nRet[i] == MV_OK)
             {
                 image = Convert2Mat(stImageInfo[i]);
+                if (i == 0)  image_firstcam = image.clone();
 
                 //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
@@ -92,16 +93,15 @@ void WorkThread(void* handle[5]) {
 
         PoseEstimation pE;
         Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
-
+        
         if (!Pose.recovery) {
             //cout << "Fail to localize the model!" << endl;
-            imshow("image_pose", image);
+            imshow("image_pose", image_firstcam);
             waitKey(1);
         }
-
         //dynamicROI(Pose, camera_parameters);
 
-        plotModel(image, Pose, camera_parameters);
+        plotModel(image_firstcam, Pose, camera_parameters);
 
         if (g_bExit)
         {
@@ -212,14 +212,14 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
 
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
-
+    
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);
-
+    
     if (cornerPoints.size() > 4) {
         ArrayOrganization arrayOrg;
         int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
-
+        
         IdentifyMarker identify;
         corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
     }

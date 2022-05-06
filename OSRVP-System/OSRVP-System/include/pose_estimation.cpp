@@ -30,7 +30,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 				continue;
 			}
 		}
-	if (registrated_point_cnt > 8) {
+	if (registrated_point_cnt > 5) {
 		triangulation(imgpts1, imgpts2, pts2, camera_parameters[camera_number[0]], camera_parameters[camera_number[1]]);
 		Point3f p1, p2;
 		for (int i = 0; i < pts1.size(); i++) {
@@ -54,21 +54,55 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		}
 		Mat U, S, Vt;
 		SVDecomp(W, S, U, Vt);
+		
 		R = U * Vt;
 		R = R.t();
+		
 		Mat pm1 = (Mat_<float>(3, 1) << p1.x, p1.y, p1.z);
 		Mat pm2 = (Mat_<float>(3, 1) << p2.x, p2.y, p2.z);
-
+		
 		tvec = pm2 - R * pm1;
 
 		Rodrigues(R, rvec);
+		
+		char fname[256];
+		sprintf(fname, "rot.txt");
+		ofstream Files;
+		Files.open(fname, ios::app);
+		Files << R << endl;
+		
+		Files.close();
+
+		sprintf(fname, "end.txt");
+		Files.open(fname, ios::app);
+		Files << R * end_effector + tvec << endl;
+		Files.close();
+
+		sprintf(fname, "trans.txt");
+		Files.open(fname, ios::app);
+		Files << tvec << endl;
+		Files.close();
 
 		Pose6D.rotation = rvec;
 		Pose6D.translation = tvec;
-		Pose6D.tracking_points.push_back(Point3d(end_effector.at<double>(0, 0), end_effector.at<double>(1, 0), end_effector.at<double>(2, 0)));
+		Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at <float> (2, 0)));
 		Pose6D.recovery = true;
+
+		float reprojection_error = 0;
+		Eigen::Matrix<float, 3, 3> R_eigen;
+		Eigen::Matrix<float, 3, 1> T_eigen;
+		cv::cv2eigen(R, R_eigen);
+		cv::cv2eigen(tvec, T_eigen);
+		for (int i = 0; i < pts1.size(); i++) {
+			Eigen::MatrixXf PT1(3, 1);
+			PT1 << pts1[i].x, pts1[i].y, pts1[i].z;
+			Eigen::MatrixXf PT2(3, 1);
+			PT2 << pts2[i].x, pts2[i].y, pts2[i].z;
+			PT1 = R_eigen * PT1 + T_eigen;
+			reprojection_error += (PT1 - PT2).norm();
+		}			
+		cout << reprojection_error / pts1.size() << endl;
 	}
-	
 }
 
 void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3], int camera_number)
@@ -80,6 +114,8 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	undistortPoints(image_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, noArray(), camera_parameters[camera_number].Intrinsic);
 
 	solvePnPRansac(world_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, rvec, tvec, false, 200, 0.5, 0.9, noArray(), SOLVEPNP_EPNP);
+	rvec.convertTo(rvec, CV_32FC1);
+	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
@@ -103,7 +139,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
-	Pose6D.tracking_points.push_back(Point3d(end_effector.at<double>(0, 0), end_effector.at<double>(1, 0), end_effector.at<double>(2, 0)));
+	Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at<float>(2, 0)));
 
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, rvec, tvec, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, imagePoints);

@@ -3,6 +3,7 @@
 
 #include "identify_marker.h"
 #include <Eigen/Dense>
+#include <opencv2/core/eigen.hpp>
 #include <fstream>
 
 #define maxLostFrame 3
@@ -33,6 +34,7 @@ public:
 	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number);
 	
 	PoseInformation Pose6D;
+	Mat end_effector = (Mat_<float>(3, 1) << -270.9093, -10, 560);
 	
 private:
 	void triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
@@ -45,8 +47,6 @@ private:
 
 	Mat pts_4d;
 	vector<Point2f> pts_1, pts_2;
-
-	Mat end_effector = (Mat_<double>(3, 1) << -270.9093, -10, 560);
 };
 
 class BundleAdjustment {
