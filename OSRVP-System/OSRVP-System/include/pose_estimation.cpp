@@ -65,6 +65,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 
 		Rodrigues(R, rvec);
 		
+		/*
 		char fname[256];
 		sprintf(fname, "rot.txt");
 		ofstream Files;
@@ -82,9 +83,15 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		Files.open(fname, ios::app);
 		Files << tvec << endl;
 		Files.close();
+		*/
+		string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
+		string cameraParametersName = filePath + "cameraParams.yml";
+		FileStorage fs(cameraParametersName, FileStorage::READ);
 
 		Pose6D.rotation = rvec;
 		Pose6D.translation = tvec;
+		fs["TrackingPoint"] >> end_effector;
+		cout << end_effector << endl;
 		Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at <float> (2, 0)));
 		Pose6D.recovery = true;
 
@@ -119,7 +126,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Rodrigues(rvec, R);
 	//cout << R << endl;
 
-	//end_effector = R * end_effector + tvec;
+	/*
 	char fname[256];
 	sprintf(fname, "rot.txt");
 	ofstream Files;
@@ -136,7 +143,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Files.open(fname, ios::app);
 	Files << tvec << endl;
 	Files.close();
-
+	*/
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
 	Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at<float>(2, 0)));

@@ -34,7 +34,7 @@ public:
 	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number);
 	
 	PoseInformation Pose6D;
-	Mat end_effector = (Mat_<float>(3, 1) << -270.9093, -10, 560);
+	Mat end_effector = Mat::zeros(3, 1, CV_32FC1);
 	
 private:
 	void triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
