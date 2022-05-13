@@ -1,36 +1,36 @@
 #ifndef INCLUDE_POSE_ESTIMATION_H_
 #define INCLUDE_POSE_ESTIMATION_H_
-
+#define _HAS_STD_BYTE 0
 #pragma warning(disable:4996) 
 
 #include "identify_marker.h"
 
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
-//#include "ceres/ceres.h"
-//#include "glog/logging.h"
+#include "ceres/ceres.h"
+#include "glog/logging.h"
 
 #include <fstream>
 
 #define maxLostFrame 3
 
 struct PoseInformation {
-	Mat rotation, translation;
-	vector<Point3f> tracking_points;
+	cv::Mat rotation, translation;
+	vector<cv::Point3f> tracking_points;
 	bool recovery = false;
 };
 
 struct DynamicROIBox {
-	Point position;
+	cv::Point position;
 	int width, height;
 	int lostFrame = 0;
 };
 
 struct CameraParams {
-	Mat Intrinsic = Mat::zeros(3, 3, CV_32FC1);
-	Mat Distortion = Mat::zeros(5, 1, CV_32FC1);
-	Mat Rotation = Mat::eye(3, 3, CV_32FC1);
-	Mat Translation = Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat Intrinsic = cv::Mat::zeros(3, 3, CV_32FC1);
+	cv::Mat Distortion = cv::Mat::zeros(5, 1, CV_32FC1);
+	cv::Mat Rotation = cv::Mat::eye(3, 3, CV_32FC1);
+	cv::Mat Translation = cv::Mat::zeros(3, 1, CV_32FC1);
 };
 
 class PoseEstimation {
@@ -44,19 +44,19 @@ public:
 	void bundleAdjustment(PoseInformation Pose6D, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5]);
 
 	PoseInformation Pose6D;
-	Mat end_effector = Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat end_effector = cv::Mat::zeros(3, 1, CV_32FC1);
 	
 private:
-	void triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
-	Point2f pixel2cam(const Point2f& p, const Mat& K);
+	void triangulation(const std::vector<cv::Point2f>& points_left, const std::vector<cv::Point2f>& points_right, std::vector<cv::Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
+	cv::Point2f pixel2cam(const cv::Point2f& p, const cv::Mat& K);
 
-	Mat rvec, tvec, R;
-	vector<Point3f> world_points, pts1, pts2;
-	vector<Point2f> image_points, imgpts1, imgpts2;
+	cv::Mat rvec, tvec, R;
+	vector<cv::Point3f> world_points, pts1, pts2;
+	vector<cv::Point2f> image_points, imgpts1, imgpts2;
 	int registrated_point_cnt = 0;
 
-	Mat pts_4d;
-	vector<Point2f> pts_1, pts_2;
+	cv::Mat pts_4d;
+	vector<cv::Point2f> pts_1, pts_2;
 };
 
 class BundleAdjustment {

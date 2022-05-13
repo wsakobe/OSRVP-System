@@ -1,6 +1,7 @@
 #include "..\include\pre-filter.h"
 
 using namespace std;
+using namespace cv;
 
 vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     //Mat imgMark(img.rows, img.cols, CV_32FC3);

@@ -1,6 +1,7 @@
 #include "..\include\final_election.h"
 
 using namespace std;
+using namespace cv;
 
 FinalElection::FinalElection() {
     //Search for the template in the dic. If not exist, generate once.

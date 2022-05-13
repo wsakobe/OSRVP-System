@@ -5,12 +5,11 @@
 
 #define PI 3.1415926535
 
-using namespace cv;
 using namespace std;
 
 struct cornerInformation {
-	Point   point_in_pixel;
-	Point2f point_in_subpixel;
+	cv::Point   point_in_pixel;
+	cv::Point2f point_in_subpixel;
 	float angle_black_edge = -1.0;
 	float angle_white_edge = -1.0;
 	float hessian_response_score, template_response_score;
@@ -23,18 +22,18 @@ public:
 	
 	vector<cornerInformation> cornerPoints;
 
-	vector<cornerInformation> finalElection(Mat& img, vector<cornerPreInfo> candidate_corners);
-	void subpixelRefinement(Mat& img);
-	void fitQuadraticSurface(Mat& img, vector<cornerPreInfo> candidate_corners);
-	void templateMatching(Mat& img);
+	vector<cornerInformation> finalElection(cv::Mat& img, vector<cornerPreInfo> candidate_corners);
+	void subpixelRefinement(cv::Mat& img);
+	void fitQuadraticSurface(cv::Mat& img, vector<cornerPreInfo> candidate_corners);
+	void templateMatching(cv::Mat& img);
 
 private:
-	Mat tmp, img_neighbor, grad_neighbor, grad_neighbor_x, grad_neighbor_y, surface_temp_x, surface_temp_y, surface_temp;
-	Mat hypersurface_temp, hypersurface_temp_x2, hypersurface_temp_y2, hypersurface_temp_xy, hypersurface_temp_x, hypersurface_temp_y;
-	Mat B, subpixel, hypersurface_coeffs;
-	Mat grad_row, surface_row;
-	Mat img_hypersurface;
-	Mat coeffs, roots;
+	cv::Mat tmp, img_neighbor, grad_neighbor, grad_neighbor_x, grad_neighbor_y, surface_temp_x, surface_temp_y, surface_temp;
+	cv::Mat hypersurface_temp, hypersurface_temp_x2, hypersurface_temp_y2, hypersurface_temp_xy, hypersurface_temp_x, hypersurface_temp_y;
+	cv::Mat B, subpixel, hypersurface_coeffs;
+	cv::Mat grad_row, surface_row;
+	cv::Mat img_hypersurface;
+	cv::Mat coeffs, roots;
 
 	int maskTemR = 6, maskTemp = 13;
 	int maskR = 5;

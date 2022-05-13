@@ -11,29 +11,29 @@
 struct matrixInform
 {
 	int     mLabel = -1;      // ËùÊô¾ØÕó±àºÅ
-	Point   mPos;           // ¾ØÕó×ø±ê
+	cv::Point   mPos;           // ¾ØÕó×ø±ê
 };
 
 class ArrayOrganization {
 public:
 	vector<matrixInform> matrix_array_pos;
-	int *delaunayTriangulation(Mat& img, vector<cornerInformation> cornerPoints);
-	void removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints);
-	void organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints);
+	int *delaunayTriangulation(cv::Mat& img, vector<cornerInformation> cornerPoints);
+	void removeWrongEdges(cv::Mat& img, vector<cornerInformation> cornerPoints);
+	void organizeCornersIntoArrays(cv::Mat& img, vector<cornerInformation> cornerPoints);
 
-	vector<Point> edge_list_ID;
+	vector<cv::Point> edge_list_ID;
 	
 	int matrix_with_ID[5][2 * number_of_corner_x][2 * number_of_corner_y]; //matrix_with_ID[labelNum][i][j] labelNum is the number of Markers, this matrix records the IDs in each coordinate.
 
 private:
-	Subdiv2D subdiv_delaunay;
+	cv::Subdiv2D subdiv_delaunay;
 	int e0 = 0, vertex = 0;
-	Point2f org, dst;
-	vector<Vec4f> edge_list;
+	cv::Point2f org, dst;
+	vector<cv::Vec4f> edge_list;
 
-	float edgeDistance2(Point2f a, Point2f b);
-	float edgeAngle2(Point2f a, Point2f b);
-	Point directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2);
+	float edgeDistance2(cv::Point2f a, cv::Point2f b);
+	float edgeAngle2(cv::Point2f a, cv::Point2f b);
+	cv::Point directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2);
 	bool  angleJudge(float angle1, float angle2);
 
 	const float maxCornerDistance = 50.0, maxCornerAngle = 18.0, maxCornerAngleInOrg = 20.0;

@@ -4,12 +4,12 @@
 #include "corner_array_organization.h"
 
 struct valueMatrix {
-	Point pos;
+	cv::Point pos;
 	int dir;
 };
 
 struct corner_pos_with_ID {
-	Point2f subpixel_pos;
+	cv::Point2f subpixel_pos;
 	int label;
 	int ID;
 };
@@ -18,7 +18,7 @@ class OrganizationArray;
 
 class IdentifyMarker {
 public:
-	vector<corner_pos_with_ID> identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *value_matrix, int (*dot_matrix)[30]);
+	vector<corner_pos_with_ID> identifyMarker(cv::Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *value_matrix, int (*dot_matrix)[30]);
 	vector<corner_pos_with_ID> corner_pos_ID;
 
 private:

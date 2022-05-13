@@ -13,14 +13,13 @@
 #define number_of_corner_y 30
 
 using namespace std;
-using namespace cv;
 
 struct imageParams {	// Basic Image Parameters
 	int width, height;
 };
 
 struct cornerPreInfo {
-	Point corner_position;
+	cv::Point corner_position;
 	float response_score;
 };
 
@@ -29,8 +28,8 @@ public:
 	int maskR = 6;
 	int kernal_size = 7;
 	int sigma = 3;
-	Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence, img_blur;
-	vector<cornerPreInfo> preFilter(Mat& image, int number); // A Pre-Filter based on image gradient and Hessian matrix
+	cv::Mat Gx, Gy, Gxx, Gyy, Gxy, G_score, G_score_after_NMS, score_sequence, img_blur;
+	vector<cornerPreInfo> preFilter(cv::Mat& image, int number); // A Pre-Filter based on image gradient and Hessian matrix
 
 private:
 	vector<cornerPreInfo> corners;
