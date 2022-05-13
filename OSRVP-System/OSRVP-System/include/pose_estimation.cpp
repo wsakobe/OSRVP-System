@@ -1,5 +1,18 @@
 #include "pose_estimation.h"
 
+PoseEstimation::PoseEstimation()
+{
+	//using ceres::AutoDiffCostFunction;
+	//using ceres::CostFunction;
+	//using ceres::Problem;
+	//using ceres::Solve;
+	//using ceres::Solver;
+}
+
+PoseEstimation::~PoseEstimation()
+{
+}
+
 PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num)
 {
 	int number_enough_corners = 0;
@@ -13,6 +26,8 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 	if (number_enough_corners == 0) return Pose6D;
 	if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D, enough_number[0]);
 	if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D, enough_number);
+
+
 
 	return Pose6D;
 }
@@ -156,6 +171,11 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	cout << reprojection_error / imagePoints.size() << endl;
 	
 	Pose6D.recovery = true;
+}
+
+void PoseEstimation::bundleAdjustment(PoseInformation Pose6D, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5])
+{
+
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)

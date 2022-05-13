@@ -98,45 +98,21 @@ FinalElection::~FinalElection() {
 }
 
 vector<cornerInformation> FinalElection::finalElection(Mat& img, vector<cornerPreInfo> corners) {
-    subpixelRefinement(img, corners);
-    fitQuadraticSurface(img);
+    fitQuadraticSurface(img, corners);
     templateMatching(img);
+    subpixelRefinement(img);
    
     return cornerPoints;
 }
 
-void FinalElection::subpixelRefinement(Mat& img, vector<cornerPreInfo> corners) {
+void FinalElection::fitQuadraticSurface(Mat& img, vector<cornerPreInfo> corners) {
     for (int i = 0; i < corners.size(); i++) {
         cur.point_in_pixel = corners[i].corner_position;
         cur.hessian_response_score = corners[i].response_score;
-
-        Rect rect_neighbor(corners[i].corner_position.x - maskSurface, corners[i].corner_position.y - maskSurface, maskSurfaceL, maskSurfaceL);
-        img_neighbor = img(rect_neighbor);
-
-        Scharr(img_neighbor, grad_neighbor_x, CV_32FC1, 1, 0);
-        Scharr(img_neighbor, grad_neighbor_y, CV_32FC1, 0, 1);
-        grad_neighbor_x = grad_neighbor_x.reshape(1, maskSurfaceL * maskSurfaceL);
-        grad_neighbor_y = grad_neighbor_y.reshape(1, maskSurfaceL * maskSurfaceL);
-        hconcat(grad_neighbor_x, grad_neighbor_y, grad_neighbor);
-
-        for (int j = 0; j < grad_neighbor.rows; j++) {
-            grad_row = grad_neighbor.rowRange(j, j + 1);
-            surface_row = surface_temp.rowRange(j, j + 1);
-            result = surface_row.dot(grad_row);
-            B.at<float>(j, 0) = (float)result;
-        }
-
-        solve(grad_neighbor, B, subpixel, DECOMP_SVD);
-
-        cur.point_in_subpixel.x = subpixel.at<float>(0, 0) + corners[i].corner_position.x - maskSurface;
-        cur.point_in_subpixel.y = subpixel.at<float>(1, 0) + corners[i].corner_position.y - maskSurface;
+        cur.point_in_subpixel = Point2f(corners[i].corner_position);
         cornerPoints.push_back(cur);
     }
-    
-    return;
-}
 
-void FinalElection::fitQuadraticSurface(Mat& img) {
     for (int i = 0; i < cornerPoints.size(); i++) {
         Rect rect(cornerPoints[i].point_in_pixel.x - maskSurface, cornerPoints[i].point_in_pixel.y - maskSurface, maskSurfaceL, maskSurfaceL);
         img_hypersurface = img(rect).clone();
@@ -158,7 +134,6 @@ void FinalElection::fitQuadraticSurface(Mat& img) {
             cornerPoints[i].angle_white_edge = min(angle1, angle2);
             cornerPoints[i].angle_black_edge = max(angle1, angle2);
         }
-        
     }
     
     return;
@@ -218,5 +193,32 @@ void FinalElection::templateMatching(Mat& img) {
     //imshow("imgMark", imgMark);
     //waitKey(1);
     
+    return;
+}
+
+void FinalElection::subpixelRefinement(Mat& img) {
+    for (int i = 0; i < cornerPoints.size(); i++) {
+        Rect rect_neighbor(cornerPoints[i].point_in_pixel.x - maskSurface, cornerPoints[i].point_in_pixel.y - maskSurface, maskSurfaceL, maskSurfaceL);
+        img_neighbor = img(rect_neighbor);
+
+        Scharr(img_neighbor, grad_neighbor_x, CV_32FC1, 1, 0);
+        Scharr(img_neighbor, grad_neighbor_y, CV_32FC1, 0, 1);
+        grad_neighbor_x = grad_neighbor_x.reshape(1, maskSurfaceL * maskSurfaceL);
+        grad_neighbor_y = grad_neighbor_y.reshape(1, maskSurfaceL * maskSurfaceL);
+        hconcat(grad_neighbor_x, grad_neighbor_y, grad_neighbor);
+
+        for (int j = 0; j < grad_neighbor.rows; j++) {
+            grad_row = grad_neighbor.rowRange(j, j + 1);
+            surface_row = surface_temp.rowRange(j, j + 1);
+            result = surface_row.dot(grad_row);
+            B.at<float>(j, 0) = (float)result;
+        }
+
+        solve(grad_neighbor, B, subpixel, DECOMP_SVD);
+
+        cornerPoints[i].point_in_subpixel.x = subpixel.at<float>(0, 0) + cornerPoints[i].point_in_pixel.x - maskSurface;
+        cornerPoints[i].point_in_subpixel.y = subpixel.at<float>(1, 0) + cornerPoints[i].point_in_pixel.y - maskSurface;
+    }
+
     return;
 }

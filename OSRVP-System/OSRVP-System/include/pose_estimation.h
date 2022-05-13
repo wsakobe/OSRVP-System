@@ -1,9 +1,15 @@
 #ifndef INCLUDE_POSE_ESTIMATION_H_
 #define INCLUDE_POSE_ESTIMATION_H_
 
+#pragma warning(disable:4996) 
+
 #include "identify_marker.h"
+
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
+//#include "ceres/ceres.h"
+//#include "glog/logging.h"
+
 #include <fstream>
 
 #define maxLostFrame 3
@@ -29,10 +35,14 @@ struct CameraParams {
 
 class PoseEstimation {
 public:
+	PoseEstimation();
+	~PoseEstimation();
+
 	PoseInformation poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num);
 	void poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5]);
 	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number);
-	
+	void bundleAdjustment(PoseInformation Pose6D, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5]);
+
 	PoseInformation Pose6D;
 	Mat end_effector = Mat::zeros(3, 1, CV_32FC1);
 	

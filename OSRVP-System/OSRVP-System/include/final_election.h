@@ -24,8 +24,8 @@ public:
 	vector<cornerInformation> cornerPoints;
 
 	vector<cornerInformation> finalElection(Mat& img, vector<cornerPreInfo> candidate_corners);
-	void subpixelRefinement(Mat& img, vector<cornerPreInfo> candidate_corners);
-	void fitQuadraticSurface(Mat& img);
+	void subpixelRefinement(Mat& img);
+	void fitQuadraticSurface(Mat& img, vector<cornerPreInfo> candidate_corners);
 	void templateMatching(Mat& img);
 
 private:
