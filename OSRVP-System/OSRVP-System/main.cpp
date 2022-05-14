@@ -72,7 +72,7 @@ void WorkThread(void* handle[5]) {
             {
                 image = Convert2Mat(stImageInfo[i]);
                 if (i == 0)  image_firstcam = image.clone();
-
+                imwrite("image.bmp", image);
                 //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
@@ -114,7 +114,9 @@ void WorkThread(void* handle[5]) {
 
 int main(int argc, char* argv[]) {
     initModel();
+    google::InitGoogleLogging(argv[0]);
 
+    /*
     //工业相机实时视频流
     if (!initCamera()) return 0;
     
@@ -146,22 +148,17 @@ int main(int argc, char* argv[]) {
         }
         printf("Device successfully closed.\n");
     } while (0);
-
-#pragma endregion
     
+#pragma endregion
+    */
     //视频流处理
-    /*
-    VideoCapture capture;
-    image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
-    //image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
-    if (!capture.isOpened())
-    {
-        printf("can not open ...\n");
-        return -1;
-    }
-    capture.read(image);
+    //VideoCapture capture;
+    //image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
+    image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
+
+    //capture.read(image);
     stDeviceList.nDeviceNum = 1;
-    while (capture.read(image)) {
+    //while (capture.read(image)) {
         start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         cout << 1000.0 / (start_time - last_time) << endl;
         last_time = start_time;
@@ -174,36 +171,30 @@ int main(int argc, char* argv[]) {
         //waitKey(1);
 
         corner_pos_ID.push_back(readMarker(image_crop));
-        //corner_pos_ID.push_back(readMarker(image_crop));
-
-        cout << corner_pos_ID[0].size() << endl;
-        if (corner_pos_ID[0].size() < 4) {
-            cout << "Not enough corners!" << endl;
-            imshow("image_pose", image);
-            waitKey(1);
-            if (++Box[0].lostFrame > 5) {
-                Box[0].position = Point(0, 0);
-                Box[0].height = image.rows;
-                Box[0].width = image.cols;
-            }
-            continue;
-        }
 
         for (int i = 0; i < corner_pos_ID[0].size(); i++)  corner_pos_ID[0][i].subpixel_pos += Point2f(Box[0].position);
         PoseEstimation pE;
         Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
 
+        if (!Pose.recovery) {
+            //cout << "Fail to localize the model!" << endl;
+            imshow("image_pose", image);
+            waitKey(1);
+        }
         dynamicROI(Pose, camera_parameters);
 
         plotModel(image, Pose, camera_parameters);
-    }
-    */
+    //}
+    
     destroyAllWindows();
     return 0;
 }
 
 vector<corner_pos_with_ID> readMarker(Mat& image) {
     image_gray = image.clone();
+    if (image_gray.channels() != 1) {
+        cvtColor(image_gray, image_gray, COLOR_BGR2GRAY);
+    }
     image_gray.convertTo(image_gray, CV_32FC1); image_gray *= 1. / 255;
 
     corner_pos.clear();
@@ -410,7 +401,10 @@ bool initCamera() {
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters) {
     if (!Pose.recovery) return;
     Mat imgMark(image.rows, image.cols, CV_32FC3);
-    cvtColor(image, imgMark, COLOR_GRAY2RGB);
+    if (image.channels() != 1)
+        imgMark = image.clone();
+    else
+        cvtColor(image, imgMark, COLOR_GRAY2RGB);
     
     axesPoints.clear();
     imagePoints.clear();
@@ -437,7 +431,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     circle(imgMark, imagePoints[0], 5, Scalar(250, 120, 0), -1);
         
     imshow("image_pose", imgMark);
-    waitKey(1);
+    waitKey(0);
 }
 
 int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)

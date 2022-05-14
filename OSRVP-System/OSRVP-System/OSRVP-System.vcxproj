@@ -80,8 +80,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\opencv\opencv\build\include\opencv2;D:\opencv\opencv\build\include;D:\eigen-3.4.0\eigen-3.4.0;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\opencv\opencv\build\x64\vc15\lib;C:\Program Files %28x86%29\MVS\Development\Libraries\win64;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Ceres\Ceres\include;D:\Ceres\gflags\include;D:\Ceres\glog\include;D:\opencv\opencv\build\include\opencv2;D:\opencv\opencv\build\include;D:\eigen-3.4.0\eigen-3.4.0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Ceres\Ceres\lib;D:\Ceres\gflags\lib;D:\Ceres\glog\lib;D:\opencv\opencv\build\x64\vc15\lib;C:\Program Files %28x86%29\MVS\Development\Libraries\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -121,14 +121,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;GLOG_NO_ABBREVIATED_SEVERITIES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\MVS\Development\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world453d.lib;MvCameraControl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world453d.lib;MvCameraControl.lib;ceres-debug.lib;gflags_debug.lib;glogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

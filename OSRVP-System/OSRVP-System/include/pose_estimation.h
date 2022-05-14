@@ -12,6 +12,8 @@
 
 #include <fstream>
 
+using namespace ceres;
+
 #define maxLostFrame 3
 
 struct PoseInformation {
@@ -39,9 +41,9 @@ public:
 	~PoseEstimation();
 
 	PoseInformation poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num);
-	void poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5]);
-	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number);
-	void bundleAdjustment(PoseInformation Pose6D, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5]);
+	void poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
+	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
+	void bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
 
 	PoseInformation Pose6D;
 	cv::Mat end_effector = cv::Mat::zeros(3, 1, CV_32FC1);
@@ -49,7 +51,10 @@ public:
 private:
 	void triangulation(const std::vector<cv::Point2f>& points_left, const std::vector<cv::Point2f>& points_right, std::vector<cv::Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
 	cv::Point2f pixel2cam(const cv::Point2f& p, const cv::Mat& K);
+	void buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
 
+	int enough_number[5] = { 0 };
+	int number_enough_corners = 0;
 	cv::Mat rvec, tvec, R;
 	vector<cv::Point3f> world_points, pts1, pts2;
 	vector<cv::Point2f> image_points, imgpts1, imgpts2;
@@ -57,6 +62,8 @@ private:
 
 	cv::Mat pts_4d;
 	vector<cv::Point2f> pts_1, pts_2;
+
+	Problem problem;
 };
 
 class BundleAdjustment {

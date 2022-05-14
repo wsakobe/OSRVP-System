@@ -2,13 +2,39 @@
 
 using namespace cv;
 
+struct SnavelyReprojectionError
+{
+	SnavelyReprojectionError(double observation_x, double observation_y) :observed_x(observation_x), observed_y(observation_y) {}
+
+	template<typename T>
+	bool operator()(const T* const camera,
+		const T* const point,
+		T* residuals)const {
+		T predictions[2];
+		CamProjectionWithDistortion(camera, point, predictions);
+		residuals[0] = predictions[0] - T(observed_x);
+		residuals[1] = predictions[1] - T(observed_y);
+
+		return true;
+	}
+
+	static ceres::CostFunction* Create(const float observed_x, const float observed_y) {
+		return (new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 2, 9, 3>(
+			new SnavelyReprojectionError(observed_x, observed_y)));
+	}
+
+	float observed_x;
+	float observed_y;
+};
+
 PoseEstimation::PoseEstimation()
 {
-	//using ceres::AutoDiffCostFunction;
-	//using ceres::CostFunction;
-	//using ceres::Problem;
-	//using ceres::Solve;
-	//using ceres::Solver;
+	using ceres::AutoDiffCostFunction;
+	using ceres::CostFunction;
+	using ceres::Problem;
+	using ceres::Solve;
+	using ceres::Solver;
+
 }
 
 PoseEstimation::~PoseEstimation()
@@ -17,8 +43,6 @@ PoseEstimation::~PoseEstimation()
 
 PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num)
 {
-	int number_enough_corners = 0;
-	int enough_number[5] = { 0 };
 	Pose6D.recovery = false;
 	for (int i = 0; i < camera_num; i++) {
 		if (corner_set[i].size() > 8) {
@@ -26,29 +50,29 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 		}
 	}
 	if (number_enough_corners == 0) return Pose6D;
-	if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D, enough_number[0]);
-	if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D, enough_number);
+	if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D);
+	if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D);
 
-
+	bundleAdjustment(corner_set, camera_parameters, model_3D);
 
 	return Pose6D;
 }
 
-void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5])
+void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
 {
 	registrated_point_cnt = 0;
-	for (int i = 0; i < corner_set[camera_number[0]].size(); i++)
-		for (int j = 0; j < corner_set[camera_number[1]].size(); j++) {
-			if ((corner_set[camera_number[0]][i].ID == corner_set[camera_number[1]][j].ID) && (model_3D[corner_set[camera_number[0]][i].ID][2] - 0.0 > 1e-2)) {
-				imgpts1.push_back(corner_set[camera_number[0]][i].subpixel_pos);
-				imgpts2.push_back(corner_set[camera_number[1]][j].subpixel_pos);
-				pts1.push_back(Point3f(model_3D[corner_set[camera_number[0]][i].ID][0], model_3D[corner_set[camera_number[0]][i].ID][1], model_3D[corner_set[camera_number[0]][i].ID][2]));
+	for (int i = 0; i < corner_set[enough_number[0]].size(); i++)
+		for (int j = 0; j < corner_set[enough_number[1]].size(); j++) {
+			if ((corner_set[enough_number[0]][i].ID == corner_set[enough_number[1]][j].ID) && (model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0 > 1e-2)) {
+				imgpts1.push_back(corner_set[enough_number[0]][i].subpixel_pos);
+				imgpts2.push_back(corner_set[enough_number[1]][j].subpixel_pos);
+				pts1.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
 				registrated_point_cnt++;
 				continue;
 			}
 		}
 	if (registrated_point_cnt > 8) {
-		triangulation(imgpts1, imgpts2, pts2, camera_parameters[camera_number[0]], camera_parameters[camera_number[1]]);
+		triangulation(imgpts1, imgpts2, pts2, camera_parameters[enough_number[0]], camera_parameters[enough_number[1]]);
 		Point3f p1, p2;
 		for (int i = 0; i < pts1.size(); i++) {
 			p1 += pts1[i];
@@ -128,15 +152,15 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 	}
 }
 
-void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3], int camera_number)
+void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3])
 {
-	for (int i = 0; i < corner_set[camera_number].size(); i++) {
-		world_points.push_back(Point3f(model_3D[corner_set[camera_number][i].ID][0], model_3D[corner_set[camera_number][i].ID][1], model_3D[corner_set[camera_number][i].ID][2]));
-		image_points.push_back(corner_set[camera_number][i].subpixel_pos);
+	for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
+		world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
+		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 	}
-	undistortPoints(image_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, noArray(), camera_parameters[camera_number].Intrinsic);
+	undistortPoints(image_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, noArray(), camera_parameters[enough_number[0]].Intrinsic);
 
-	solvePnPRansac(world_points, image_points, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, rvec, tvec, false, 200, 0.5, 0.9, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.5, 0.9, noArray(), SOLVEPNP_EPNP);
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
@@ -165,7 +189,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at<float>(2, 0)));
 
 	vector<Point2f> imagePoints;
-	projectPoints(world_points, rvec, tvec, camera_parameters[camera_number].Intrinsic, camera_parameters[camera_number].Distortion, imagePoints);
+	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
 
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++)
@@ -175,9 +199,18 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Pose6D.recovery = true;
 }
 
-void PoseEstimation::bundleAdjustment(PoseInformation Pose6D, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], int camera_number[5])
+void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
 {
+	buildProblem(&problem, corner_set, camera_parameters, model_3D);
 
+	Solver::Options options;
+	options.linear_solver_type = DENSE_SCHUR;
+	options.gradient_tolerance = 1e-16;
+	options.function_tolerance = 1e-16;
+	Solver::Summary summary;
+
+	Solve(options, &problem, &summary);
+	std::cout << summary.FullReport() << "\n";
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)
@@ -226,4 +259,27 @@ Point2f PoseEstimation::pixel2cam(const Point2f& p, const Mat& K)
 		(p.x - K.at<float>(0, 2)) / K.at<float>(0, 0),
 		(p.y - K.at<float>(1, 2)) / K.at<float>(1, 1)
 	);
+}
+
+void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]) {
+	for (int i = 0; i < number_enough_corners; ++i) {
+		CostFunction* cost_function;
+
+		// Each Residual block takes a point and a camera as input 
+		// and outputs a 2 dimensional Residual
+
+		cost_function = SnavelyReprojectionError::Create(observations[2 * i + 0], observations[2 * i + 1]);
+
+		// If enabled use Huber's loss function. 
+		LossFunction* loss_function = params.robustify ? new HuberLoss(1.0) : NULL;
+
+		// Each observatoin corresponds to a pair of a camera and a point 
+		// which are identified by camera_index()[i] and point_index()[i]
+		// respectively.
+		double* camera = cameras + camera_block_size * bal_problem->camera_index()[i];
+		double* point = points + point_block_size * bal_problem->point_index()[i];
+
+
+		problem->AddResidualBlock(cost_function, loss_function, camera, point);
+	}
 }
