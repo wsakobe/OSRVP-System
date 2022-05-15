@@ -64,6 +64,11 @@ private:
 	vector<cv::Point2f> pts_1, pts_2;
 
 	Problem problem;
+	double rot[3], trans[3];
+	cv::Mat R, point_cam;
+	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat tvec = cv::Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat point_world = cv::Mat::zeros(3, 1, CV_32FC1);
 };
 
 class BundleAdjustment {
