@@ -4,29 +4,29 @@ using namespace cv;
 
 struct SnavelyReprojectionError
 {
-	SnavelyReprojectionError(double observation_x, double observation_y, int cam_ID, int point_ID) :observed_x(observation_x), observed_y(observation_y), cam_ID(cam_ID), point_ID(point_ID) {}
+	SnavelyReprojectionError(double observation_x, double observation_y, CameraParams cam, double* point_ID) :observed_x(observation_x), observed_y(observation_y), cam(cam), point_ID(point_ID) {}
 
 	template<typename T>
 	bool operator()(const T* const rotation,
 		const T* const translation,
 		T* residuals)const {
 		T predictions[2];
-		CamProjectionWithDistortion(rotation, translation, cam_ID, point_ID, predictions);
+		CamProjectionWithDistortion(rotation, translation, cam, point_ID, predictions);
 		residuals[0] = predictions[0] - T(observed_x);
 		residuals[1] = predictions[1] - T(observed_y);
 
 		return true;
 	}
 
-	static ceres::CostFunction* Create(const float observed_x, const float observed_y, const int cam_ID, const int point_ID) {
+	static ceres::CostFunction* Create(const float observed_x, const float observed_y, const CameraParams cam, double* point_ID) {
 		return (new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 4, 3, 3>(
-			new SnavelyReprojectionError(observed_x, observed_y, cam_ID, point_ID)));
+			new SnavelyReprojectionError(observed_x, observed_y, cam, point_ID)));
 	}
 
 	float observed_x;
 	float observed_y;
-	int cam_ID;
-	int point_ID;
+	CameraParams cam;
+	double* point_ID;
 };
 
 PoseEstimation::PoseEstimation()
@@ -275,7 +275,12 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 	for (int i = 0; i < number_enough_corners; ++i) {
 		for (int j = 0; j < corner_set[i].size(); j++) {
 			CostFunction* cost_function;
-			cost_function = SnavelyReprojectionError::Create(corner_set[i][j].subpixel_pos.x, corner_set[i][j].subpixel_pos.y, i, corner_set[i][j].ID);
+
+			modelpoint[0] = model_3D[corner_set[i][j].ID][0];
+			modelpoint[1] = model_3D[corner_set[i][j].ID][1];
+			modelpoint[2] = model_3D[corner_set[i][j].ID][2];
+
+			cost_function = SnavelyReprojectionError::Create(corner_set[i][j].subpixel_pos.x, corner_set[i][j].subpixel_pos.y, camera_parameters[i], modelpoint);
 			
 			problem->AddResidualBlock(cost_function, NULL, &rot[0], &trans[0]);
 		}
@@ -283,18 +288,33 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 }
 
 template<typename T>
-void CamProjectionWithDistortion(const T* rot, const T* trans, T* cam, T* point, T* predictions)
+void CamProjectionWithDistortion(const T* rot, const T* trans, CameraParams cam, double* point, T* predictions)
 {
+	cv::Mat R, point_cam;
+	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat tvec = cv::Mat::zeros(3, 1, CV_32FC1);
+	cv::Mat point_world = cv::Mat::zeros(3, 1, CV_32FC1);
+	vector<cv::Point2f> imagePoint;
+	vector<cv::Point3f> worldPoint;
+
 	rvec.at<float>(0, 0) = rot[0];
 	rvec.at<float>(1, 0) = rot[1];
 	rvec.at<float>(2, 0) = rot[2];
 	tvec.at<float>(0, 0) = trans[0];
 	tvec.at<float>(1, 0) = trans[1];
 	tvec.at<float>(2, 0) = trans[2];
-	point_world.at<float>(0, 0) = model_3D[point[0]][0];
-	point_world.at<float>(1, 0) = model_3D[point[0]][1];
-	point_world.at<float>(2, 0) = model_3D[point[0]][2];
+	point_world.at<float>(0, 0) = point[0];
+	point_world.at<float>(1, 0) = point[1];
+	point_world.at<float>(2, 0) = point[2];
 
 	Rodrigues(rvec, R);
+
 	point_cam = R * point_world + tvec;
+
+	worldPoint.clear();
+	imagePoint.clear();
+	worldPoint.push_back(Point3f(point_cam.at<float>(0, 0), point_cam.at<float>(1, 0), point_cam.at<float>(2, 0)));
+	projectPoints(point_cam, cam.Rotation, cam.Translation, cam.Intrinsic, cam.Distortion, imagePoint);
+	predictions[0] = imagePoint[0].x;
+	predictions[1] = imagePoint[0].y;
 }

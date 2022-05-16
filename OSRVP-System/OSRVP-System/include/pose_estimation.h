@@ -55,7 +55,7 @@ private:
 
 	int enough_number[5] = { 0 };
 	int number_enough_corners = 0;
-	cv::Mat rvec, tvec, R;
+	cv::Mat rvec, tvec, R, R_cam;
 	vector<cv::Point3f> world_points, pts1, pts2;
 	vector<cv::Point2f> image_points, imgpts1, imgpts2;
 	int registrated_point_cnt = 0;
@@ -64,11 +64,7 @@ private:
 	vector<cv::Point2f> pts_1, pts_2;
 
 	Problem problem;
-	double rot[3], trans[3];
-	cv::Mat R, point_cam;
-	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_32FC1);
-	cv::Mat tvec = cv::Mat::zeros(3, 1, CV_32FC1);
-	cv::Mat point_world = cv::Mat::zeros(3, 1, CV_32FC1);
+	double rot[3], trans[3], modelpoint[3];
 };
 
 class BundleAdjustment {
