@@ -6,25 +6,24 @@ struct SnavelyReprojectionError
 {
 	SnavelyReprojectionError(double observation_x, double observation_y, CameraParams cam, double* point_ID) :observed_x(observation_x), observed_y(observation_y), cam(cam), point_ID(point_ID) {}
 
-	template<typename T>
-	bool operator()(const T* const rotation,
-		const T* const translation,
-		T* residuals)const {
-		T predictions[2];
+	bool operator()(const double* const rotation,
+		const double* const translation,
+		double* residuals)const {
+		double predictions[2];
 		CamProjectionWithDistortion(rotation, translation, cam, point_ID, predictions);
-		residuals[0] = predictions[0] - T(observed_x);
-		residuals[1] = predictions[1] - T(observed_y);
+		residuals[0] = predictions[0] - observed_x;
+		residuals[1] = predictions[1] - observed_y;
 
 		return true;
 	}
 
-	static ceres::CostFunction* Create(const float observed_x, const float observed_y, const CameraParams cam, double* point_ID) {
-		return (new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 4, 3, 3>(
+	static ceres::CostFunction* Create(const double observed_x, const double observed_y, const CameraParams cam, double* point_ID) {
+		return (new ceres::NumericDiffCostFunction<SnavelyReprojectionError, ceres::FORWARD, 2, 3, 3>(
 			new SnavelyReprojectionError(observed_x, observed_y, cam, point_ID)));
 	}
 
-	float observed_x;
-	float observed_y;
+	double observed_x;
+	double observed_y;
 	CameraParams cam;
 	double* point_ID;
 };
@@ -160,9 +159,9 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 		world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
 		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 	}
-	undistortPoints(image_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, noArray(), camera_parameters[enough_number[0]].Intrinsic);
+	//undistortPoints(image_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, noArray(), camera_parameters[enough_number[0]].Intrinsic);
 
-	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.5, 0.9, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
@@ -194,8 +193,11 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
 
 	float reprojection_error = 0;
-	for (int i = 0; i < imagePoints.size(); i++)
+	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
+		//cout << imagePoints[i].x << ' ' << image_points[i].x << ' ' << imagePoints[i].y << ' ' << image_points[i].y << endl;
+	}
+		
 	cout << reprojection_error / imagePoints.size() << endl;
 	
 	Pose6D.recovery = true;
@@ -206,7 +208,6 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	rot[0] = Pose6D.rotation.at<float>(0, 0);
 	rot[1] = Pose6D.rotation.at<float>(1, 0);
 	rot[2] = Pose6D.rotation.at<float>(2, 0);
-
 	trans[0] = Pose6D.translation.at<float>(0, 0);
 	trans[1] = Pose6D.translation.at<float>(1, 0);
 	trans[2] = Pose6D.translation.at<float>(2, 0);
@@ -215,12 +216,19 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 
 	Solver::Options options;
 	options.linear_solver_type = DENSE_SCHUR;
-	options.gradient_tolerance = 1e-16;
-	options.function_tolerance = 1e-16;
+	options.gradient_tolerance = 1e-10;
+	options.function_tolerance = 1e-10;
 	Solver::Summary summary;
 
 	Solve(options, &problem, &summary);
 	std::cout << summary.FullReport() << "\n";
+
+	Pose6D.rotation.at<float>(0, 0) = rot[0];
+	Pose6D.rotation.at<float>(1, 0) = rot[1];
+	Pose6D.rotation.at<float>(2, 0) = rot[2];
+	Pose6D.translation.at<float>(0, 0) = trans[0];
+	Pose6D.translation.at<float>(1, 0) = trans[1];
+	Pose6D.translation.at<float>(2, 0) = trans[2];
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)
@@ -272,6 +280,13 @@ Point2f PoseEstimation::pixel2cam(const Point2f& p, const Mat& K)
 }
 
 void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]) {
+	rot[0] = Pose6D.rotation.at<float>(0, 0);
+	rot[1] = Pose6D.rotation.at<float>(1, 0);
+	rot[2] = Pose6D.rotation.at<float>(2, 0);
+	trans[0] = Pose6D.translation.at<float>(0, 0);
+	trans[1] = Pose6D.translation.at<float>(1, 0);
+	trans[2] = Pose6D.translation.at<float>(2, 0);
+
 	for (int i = 0; i < number_enough_corners; ++i) {
 		for (int j = 0; j < corner_set[i].size(); j++) {
 			CostFunction* cost_function;
@@ -279,16 +294,16 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 			modelpoint[0] = model_3D[corner_set[i][j].ID][0];
 			modelpoint[1] = model_3D[corner_set[i][j].ID][1];
 			modelpoint[2] = model_3D[corner_set[i][j].ID][2];
+			//cout << modelpoint[0] << ' ' << modelpoint[1] << ' ' << modelpoint[2] << endl;
 
-			cost_function = SnavelyReprojectionError::Create(corner_set[i][j].subpixel_pos.x, corner_set[i][j].subpixel_pos.y, camera_parameters[i], modelpoint);
+			cost_function = SnavelyReprojectionError::Create(corner_set[i][j].subpixel_pos.x, corner_set[i][j].subpixel_pos.y, camera_parameters[enough_number[i]], modelpoint);
 			
 			problem->AddResidualBlock(cost_function, NULL, &rot[0], &trans[0]);
 		}
 	}
 }
 
-template<typename T>
-void CamProjectionWithDistortion(const T* rot, const T* trans, CameraParams cam, double* point, T* predictions)
+void CamProjectionWithDistortion(const double* const rot, const double* const trans, CameraParams cam, double* point, double* predictions)
 {
 	cv::Mat R, point_cam;
 	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_32FC1);
@@ -296,7 +311,6 @@ void CamProjectionWithDistortion(const T* rot, const T* trans, CameraParams cam,
 	cv::Mat point_world = cv::Mat::zeros(3, 1, CV_32FC1);
 	vector<cv::Point2f> imagePoint;
 	vector<cv::Point3f> worldPoint;
-
 	rvec.at<float>(0, 0) = rot[0];
 	rvec.at<float>(1, 0) = rot[1];
 	rvec.at<float>(2, 0) = rot[2];
@@ -306,15 +320,14 @@ void CamProjectionWithDistortion(const T* rot, const T* trans, CameraParams cam,
 	point_world.at<float>(0, 0) = point[0];
 	point_world.at<float>(1, 0) = point[1];
 	point_world.at<float>(2, 0) = point[2];
+	//cout << point[0] << ' ' << point[1] << ' ' << point[2] << endl;
 
 	Rodrigues(rvec, R);
-
 	point_cam = R * point_world + tvec;
-
-	worldPoint.clear();
+	Rodrigues(cam.Rotation, rvec);
 	imagePoint.clear();
-	worldPoint.push_back(Point3f(point_cam.at<float>(0, 0), point_cam.at<float>(1, 0), point_cam.at<float>(2, 0)));
-	projectPoints(point_cam, cam.Rotation, cam.Translation, cam.Intrinsic, cam.Distortion, imagePoint);
+
+	projectPoints(point_cam, rvec, cam.Translation, cam.Intrinsic, cam.Distortion, imagePoint);
 	predictions[0] = imagePoint[0].x;
 	predictions[1] = imagePoint[0].y;
 }

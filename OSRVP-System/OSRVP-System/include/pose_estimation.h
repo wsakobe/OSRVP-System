@@ -51,8 +51,8 @@ public:
 private:
 	void triangulation(const std::vector<cv::Point2f>& points_left, const std::vector<cv::Point2f>& points_right, std::vector<cv::Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2);
 	cv::Point2f pixel2cam(const cv::Point2f& p, const cv::Mat& K);
-	void buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
-
+	void buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]); 
+	
 	int enough_number[5] = { 0 };
 	int number_enough_corners = 0;
 	cv::Mat rvec, tvec, R, R_cam;
@@ -67,12 +67,7 @@ private:
 	double rot[3], trans[3], modelpoint[3];
 };
 
-class BundleAdjustment {
-public:
-
-private:
-
-};
+void CamProjectionWithDistortion(const double* const rot, const double* const trans, CameraParams cam, double* point, double* predictions);
 
 #pragma warning(disable:4996)
 #endif

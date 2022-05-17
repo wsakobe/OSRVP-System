@@ -246,7 +246,7 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
         Mat rvec = Mat::zeros(3, 1, CV_32FC1);
         Rodrigues(Rot, rvec);
         projectPoints(axesPoints, rvec, camera_parameters[num].Rotation * Pose.translation + camera_parameters[num].Translation, camera_parameters[num].Intrinsic, camera_parameters[num].Distortion, imagePoints);
-
+        
         for (int i = 0; i < imagePoints.size(); i++) {
             if (floor(imagePoints[i].x) < x_min) x_min = floor(imagePoints[i].x);
             if (floor(imagePoints[i].y) < y_min) y_min = floor(imagePoints[i].y);
