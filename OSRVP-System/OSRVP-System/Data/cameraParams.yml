@@ -49,9 +49,9 @@ Translation2: !!opencv-matrix
    cols: 1
    dt: f
    data: [ 128.500411, -0.5874972, 4.7209643 ]
-
-TrackingPoint: !!opencv-matrix
+trackingNumber: 1
+TrackingPoint1: !!opencv-matrix
    rows: 3
    cols: 1
    dt: f
-   data: [-252.9093, 18, 528 ]
+   data: [-244.9093, 18, 529 ]

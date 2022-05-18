@@ -32,7 +32,6 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
     for (int i = 0; i < number; i++) Q.pop();
     G_filtermin = Q.top();
     
-
     for (int i = maskR; i < img_blur.rows - maskR; i++)
         for (int j = maskR; j < img_blur.cols - maskR; j++) {
     		if (G_score_after_NMS.ptr<float>(i)[j] < G_filtermin)

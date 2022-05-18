@@ -1,37 +1,68 @@
 #include "pose_estimation.h"
+#include "ceres/rotation.h"
 
 using namespace cv;
 
 struct SnavelyReprojectionError
 {
-	SnavelyReprojectionError(double observation_x, double observation_y, CameraParams cam, double* point_ID) :observed_x(observation_x), observed_y(observation_y), cam(cam), point_ID(point_ID) {}
+	cv::Point2d observed;
+	CameraParams cam;
+	cv::Point3d point_ID;
 
-	bool operator()(const double* const rotation,
-		const double* const translation,
-		double* residuals)const {
-		double predictions[2];
-		CamProjectionWithDistortion(rotation, translation, cam, point_ID, predictions);
-		residuals[0] = predictions[0] - observed_x;
-		residuals[1] = predictions[1] - observed_y;
+	SnavelyReprojectionError(Point2d observation, CameraParams cam, Point3d point_ID) :observed(observation), cam(cam), point_ID(point_ID) {}
+
+	template <typename T>
+	bool operator()(const T* const rotation,
+		const T* const translation,
+		T* residuals)const {
+		T predictions[2], pos_proj[3], pos_proj1[3], pos_world[3], rot_cam[3];
+		Mat rvec_cam;
+		
+		pos_world[0] = T(point_ID.x);
+		pos_world[1] = T(point_ID.y);
+		pos_world[2] = T(point_ID.z);
+		AngleAxisRotatePoint(rotation, pos_world, pos_proj1);
+
+		pos_proj1[0] += translation[0];
+		pos_proj1[1] += translation[1];
+		pos_proj1[2] += translation[2];
+
+		Rodrigues(cam.Rotation, rvec_cam);
+		cout << cam.Rotation << endl << rvec_cam;
+		rot_cam[0] = T(rvec_cam.at<float>(0, 0));
+		rot_cam[1] = T(rvec_cam.at<float>(1, 0));
+		rot_cam[2] = T(rvec_cam.at<float>(2, 0));
+		AngleAxisRotatePoint(rot_cam, pos_proj1, pos_proj);
+
+		pos_proj[0] += T(cam.Translation.at<float>(0, 0));
+		pos_proj[1] += T(cam.Translation.at<float>(1, 0));
+		pos_proj[2] += T(cam.Translation.at<float>(2, 0));
+
+		const T fx = T(cam.Intrinsic.at<float>(0, 0));
+		const T fy = T(cam.Intrinsic.at<float>(1, 1));
+		const T cx = T(cam.Intrinsic.at<float>(0, 2));
+		const T cy = T(cam.Intrinsic.at<float>(1, 2));
+
+		predictions[0] = fx * (pos_proj[0] / pos_proj[2]) + cx;
+		predictions[1] = fy * (pos_proj[1] / pos_proj[2]) + cy;
+
+		residuals[0] = predictions[0] - T(observed.x);
+		residuals[1] = predictions[1] - T(observed.y);
 
 		return true;
 	}
 
-	static ceres::CostFunction* Create(const double observed_x, const double observed_y, const CameraParams cam, double* point_ID) {
-		return (new ceres::NumericDiffCostFunction<SnavelyReprojectionError, ceres::FORWARD, 2, 3, 3>(
-			new SnavelyReprojectionError(observed_x, observed_y, cam, point_ID)));
-	}
+	static ceres::CostFunction* Create(Point2d observed, CameraParams cam, Point3d point_ID) {
+		return (new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 2, 3, 3>(
+			new SnavelyReprojectionError(observed, cam, point_ID)));
+	}	
 
-	double observed_x;
-	double observed_y;
-	CameraParams cam;
-	double* point_ID;
 };
 
 PoseEstimation::PoseEstimation()
 {
-	using ceres::AutoDiffCostFunction;
 	using ceres::CostFunction;
+	using ceres::AutoDiffCostFunction;
 	using ceres::Problem;
 	using ceres::Solve;
 	using ceres::Solver;
@@ -132,8 +163,15 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 
 		Pose6D.rotation = rvec;
 		Pose6D.translation = tvec;
-		fs["TrackingPoint"] >> end_effector;
-		Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at <float> (2, 0)));
+		int tracking_number;
+		fs["trackingNumber"] >> tracking_number;
+		string TrackingPoint = "TrackingPoint";
+		Mat trackingPoint;
+		for (int i = 0; i < tracking_number; i++) {
+			string TrackingPointi = TrackingPoint + to_string(i + 1);
+			fs[TrackingPointi] >> trackingPoint;
+			Pose6D.tracking_points.push_back(Point3f(trackingPoint.at<float>(0, 0), trackingPoint.at<float>(1, 0), trackingPoint.at<float>(2, 0)));
+		}	
 		Pose6D.recovery = true;
 
 		float reprojection_error = 0;
@@ -166,28 +204,23 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
 	//cout << R << endl;
-
-	/*
-	char fname[256];
-	sprintf(fname, "rot.txt");
-	ofstream Files;
-	Files.open(fname, ios::app);
-	Files << R << endl;
-	Files.close();
-
-	sprintf(fname, "end.txt");
-	Files.open(fname, ios::app);
-	Files << R * end_effector + tvec << endl;
-	Files.close();
-
-	sprintf(fname, "trans.txt");
-	Files.open(fname, ios::app);
-	Files << tvec << endl;
-	Files.close();
-	*/
+			
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
-	Pose6D.tracking_points.push_back(Point3d(end_effector.at<float>(0, 0), end_effector.at<float>(1, 0), end_effector.at<float>(2, 0)));
+
+	string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
+	string cameraParametersName = filePath + "cameraParams.yml";
+	FileStorage fs(cameraParametersName, FileStorage::READ);
+
+	int tracking_number;
+	fs["trackingNumber"] >> tracking_number;
+	string TrackingPoint = "TrackingPoint";
+	Mat trackingPoint;
+	for (int i = 0; i < tracking_number; i++) {
+		string TrackingPointi = TrackingPoint + to_string(i + 1);
+		fs[TrackingPointi] >> trackingPoint;
+		Pose6D.tracking_points.push_back(Point3f(trackingPoint.at<float>(0, 0), trackingPoint.at<float>(1, 0), trackingPoint.at<float>(2, 0)));
+	}
 
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
@@ -195,12 +228,34 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
-		//cout << imagePoints[i].x << ' ' << image_points[i].x << ' ' << imagePoints[i].y << ' ' << image_points[i].y << endl;
-	}
-		
-	cout << reprojection_error / imagePoints.size() << endl;
+	}		
+	cout << "Origin RE: " << reprojection_error / imagePoints.size() << endl;
 	
 	Pose6D.recovery = true;
+
+	//Print into files
+	/*
+	Mat tracking_point(3, 1, CV_32FC1);
+	tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
+	tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
+	tracking_point.at<float>(2, 0) = Pose6D.tracking_points[0].z;
+	char fname[256];
+	sprintf(fname, "rot1.txt");
+	ofstream Files;
+	Files.open(fname, ios::app);
+	Files << R << endl;
+	Files.close();
+
+	sprintf(fname, "end1.txt");
+	Files.open(fname, ios::app);
+	Files << R * tracking_point + tvec << endl;
+	Files.close();
+
+	sprintf(fname, "trans1.txt");
+	Files.open(fname, ios::app);
+	Files << tvec << endl;
+	Files.close();
+	*/
 }
 
 void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
@@ -216,12 +271,13 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 
 	Solver::Options options;
 	options.linear_solver_type = DENSE_SCHUR;
-	options.gradient_tolerance = 1e-10;
-	options.function_tolerance = 1e-10;
+	options.gradient_tolerance = 1e-16;
+	options.function_tolerance = 1e-16;
+	options.parameter_tolerance = 1e-6;
 	Solver::Summary summary;
 
 	Solve(options, &problem, &summary);
-	std::cout << summary.FullReport() << "\n";
+	std::cout << summary.BriefReport() << "\n";
 
 	Pose6D.rotation.at<float>(0, 0) = rot[0];
 	Pose6D.rotation.at<float>(1, 0) = rot[1];
@@ -229,6 +285,45 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	Pose6D.translation.at<float>(0, 0) = trans[0];
 	Pose6D.translation.at<float>(1, 0) = trans[1];
 	Pose6D.translation.at<float>(2, 0) = trans[2];
+
+	world_points.clear();
+	image_points.clear();
+	for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
+		world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
+		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
+	}
+	vector<Point2f> imagePoints;
+	projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
+
+	float reprojection_error = 0;
+	for (int i = 0; i < imagePoints.size(); i++) {
+		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
+	}
+	cout << "After BA RE: " << reprojection_error / imagePoints.size() << endl;
+
+	//Print into files
+	Mat R;
+	Mat tracking_point(3, 1, CV_32FC1);
+	tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
+	tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
+	tracking_point.at<float>(2, 0) = Pose6D.tracking_points[0].z;
+	Rodrigues(Pose6D.rotation, R);
+	char fname[256];
+	sprintf(fname, "rot2.txt");
+	ofstream Files;
+	Files.open(fname, ios::app);
+	Files << R << endl;
+	Files.close();
+
+	sprintf(fname, "end2.txt");
+	Files.open(fname, ios::app);
+	Files << R * tracking_point + tvec << endl;
+	Files.close();
+
+	sprintf(fname, "trans2.txt");
+	Files.open(fname, ios::app);
+	Files << tvec << endl;
+	Files.close();
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)
@@ -291,14 +386,9 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 		for (int j = 0; j < corner_set[i].size(); j++) {
 			CostFunction* cost_function;
 
-			modelpoint[0] = model_3D[corner_set[i][j].ID][0];
-			modelpoint[1] = model_3D[corner_set[i][j].ID][1];
-			modelpoint[2] = model_3D[corner_set[i][j].ID][2];
-			//cout << modelpoint[0] << ' ' << modelpoint[1] << ' ' << modelpoint[2] << endl;
-
-			cost_function = SnavelyReprojectionError::Create(corner_set[i][j].subpixel_pos.x, corner_set[i][j].subpixel_pos.y, camera_parameters[enough_number[i]], modelpoint);
-			
-			problem->AddResidualBlock(cost_function, NULL, &rot[0], &trans[0]);
+			cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D[corner_set[i][j].ID][0], model_3D[corner_set[i][j].ID][1], model_3D[corner_set[i][j].ID][2]));
+			cout << i << ' ' << camera_parameters[enough_number[i]].Rotation << endl;
+			problem->AddResidualBlock(cost_function, NULL, rot, trans);
 		}
 	}
 }

@@ -9,7 +9,7 @@ using namespace cv;
 using namespace std;
 
 //ReadMarker Preparation
-int camera_number, number_of_corner_x_input, number_of_corner_y_input;
+int camera_number, tracking_number, number_of_corner_x_input, number_of_corner_y_input;
 vector<CameraParams> camera_parameters;
 CameraParams cam;
 valueMatrix value_matrix[1025];
@@ -115,8 +115,7 @@ void WorkThread(void* handle[5]) {
 int main(int argc, char* argv[]) {
     initModel();
     google::InitGoogleLogging(argv[0]);
-
-    /*
+    
     //工业相机实时视频流
     if (!initCamera()) return 0;
     
@@ -150,8 +149,9 @@ int main(int argc, char* argv[]) {
     } while (0);
     
 #pragma endregion
-    */
+    
     //视频流处理
+    /*
     //VideoCapture capture;
     //image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
     image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
@@ -159,10 +159,6 @@ int main(int argc, char* argv[]) {
     //capture.read(image);
     stDeviceList.nDeviceNum = 1;
     //while (capture.read(image)) {
-        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << 1000.0 / (start_time - last_time) << endl;
-        last_time = start_time;
-        
         //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
         Rect roi(Box[0].position.x, Box[0].position.y, Box[0].width, Box[0].height);
         image_crop = image(roi);
@@ -182,10 +178,9 @@ int main(int argc, char* argv[]) {
             waitKey(1);
         }
         dynamicROI(Pose, camera_parameters);
-
-        plotModel(image, Pose, camera_parameters);
+        //plotModel(image, Pose, camera_parameters);
     //}
-    
+    */
     destroyAllWindows();
     return 0;
 }
@@ -201,10 +196,12 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
 
     ImgParams.height = image_gray.rows;
     ImgParams.width = image_gray.cols;
-
+    
+    start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
-    
+    last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);
     
@@ -216,6 +213,7 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
         corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
     }
     
+    cout << -start_time + last_time << endl;
     return corner_pos;
 }
 
@@ -329,8 +327,10 @@ void initModel() {
         fs[distCoeffsi] >> cam.Distortion;
         fs[Rotationi] >> cam.Rotation;
         fs[Translationi] >> cam.Translation;
+
         camera_parameters.push_back(cam);
     }
+
     fs.release();    	//close the file opened
 }
 
@@ -431,7 +431,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     circle(imgMark, imagePoints[0], 5, Scalar(250, 120, 0), -1);
         
     imshow("image_pose", imgMark);
-    waitKey(0);
+    waitKey(1);
 }
 
 int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
