@@ -28,7 +28,6 @@ struct SnavelyReprojectionError
 		pos_proj1[2] += translation[2];
 
 		Rodrigues(cam.Rotation, rvec_cam);
-		cout << cam.Rotation << endl << rvec_cam;
 		rot_cam[0] = T(rvec_cam.at<float>(0, 0));
 		rot_cam[1] = T(rvec_cam.at<float>(1, 0));
 		rot_cam[2] = T(rvec_cam.at<float>(2, 0));
@@ -85,7 +84,7 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 	if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D);
 	if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D);
 
-	bundleAdjustment(corner_set, camera_parameters, model_3D);
+	if (Pose6D.recovery)  bundleAdjustment(corner_set, camera_parameters, model_3D);
 
 	return Pose6D;
 }
@@ -137,26 +136,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		tvec = pm2 - R * pm1;
 
 		Rodrigues(R, rvec);
-		
-		/*
-		char fname[256];
-		sprintf(fname, "rot.txt");
-		ofstream Files;
-		Files.open(fname, ios::app);
-		Files << R << endl;
-		
-		Files.close();
-
-		sprintf(fname, "end.txt");
-		Files.open(fname, ios::app);
-		Files << R * end_effector + tvec << endl;
-		Files.close();
-
-		sprintf(fname, "trans.txt");
-		Files.open(fname, ios::app);
-		Files << tvec << endl;
-		Files.close();
-		*/
+				
 		string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
 		string cameraParametersName = filePath + "cameraParams.yml";
 		FileStorage fs(cameraParametersName, FileStorage::READ);
@@ -174,6 +154,28 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		}	
 		Pose6D.recovery = true;
 
+		//Print into files
+		Mat tracking_point(3, 1, CV_32FC1);
+		tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
+		tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
+		tracking_point.at<float>(2, 0) = Pose6D.tracking_points[0].z;
+		char fname[256];
+		sprintf(fname, "rot1.txt");
+		ofstream Files;
+		Files.open(fname, ios::app);
+		Files << R << endl;
+		Files.close();
+
+		sprintf(fname, "end1.txt");
+		Files.open(fname, ios::app);
+		Files << R * tracking_point + Pose6D.translation << endl;
+		Files.close();
+
+		sprintf(fname, "trans1.txt");
+		Files.open(fname, ios::app);
+		Files << Pose6D.translation << endl;
+		Files.close();
+
 		float reprojection_error = 0;
 		Eigen::Matrix<float, 3, 3> R_eigen;
 		Eigen::Matrix<float, 3, 1> T_eigen;
@@ -187,7 +189,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 			PT1 = R_eigen * PT1 + T_eigen;
 			reprojection_error += (PT1 - PT2).norm();
 		}			
-		cout << reprojection_error / pts1.size() << endl;
+		//cout << reprojection_error / pts1.size() << endl;
 	}
 }
 
@@ -202,9 +204,12 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
+	invert(camera_parameters[enough_number[0]].Rotation, Rotcam);
 	Rodrigues(rvec, R);
-	//cout << R << endl;
-			
+	R = Rotcam * R;
+	Rodrigues(R, rvec);
+
+	tvec = Rotcam * tvec - camera_parameters[enough_number[0]].Translation;
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
 
@@ -229,7 +234,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}		
-	cout << "Origin RE: " << reprojection_error / imagePoints.size() << endl;
+	//cout << "Origin RE: " << reprojection_error / imagePoints.size() << endl;
 	
 	Pose6D.recovery = true;
 
@@ -273,11 +278,11 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	options.linear_solver_type = DENSE_SCHUR;
 	options.gradient_tolerance = 1e-16;
 	options.function_tolerance = 1e-16;
-	options.parameter_tolerance = 1e-6;
+	options.parameter_tolerance = 1e-10;
 	Solver::Summary summary;
 
 	Solve(options, &problem, &summary);
-	std::cout << summary.BriefReport() << "\n";
+	//std::cout << summary.BriefReport() << "\n";
 
 	Pose6D.rotation.at<float>(0, 0) = rot[0];
 	Pose6D.rotation.at<float>(1, 0) = rot[1];
@@ -299,7 +304,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}
-	cout << "After BA RE: " << reprojection_error / imagePoints.size() << endl;
+	//cout << "After BA RE: " << reprojection_error / imagePoints.size() << endl;
 
 	//Print into files
 	Mat R;
@@ -317,12 +322,12 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 
 	sprintf(fname, "end2.txt");
 	Files.open(fname, ios::app);
-	Files << R * tracking_point + tvec << endl;
+	Files << R * tracking_point + Pose6D.translation << endl;
 	Files.close();
 
 	sprintf(fname, "trans2.txt");
 	Files.open(fname, ios::app);
-	Files << tvec << endl;
+	Files << Pose6D.translation << endl;
 	Files.close();
 }
 
@@ -385,9 +390,7 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 	for (int i = 0; i < number_enough_corners; ++i) {
 		for (int j = 0; j < corner_set[i].size(); j++) {
 			CostFunction* cost_function;
-
 			cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D[corner_set[i][j].ID][0], model_3D[corner_set[i][j].ID][1], model_3D[corner_set[i][j].ID][2]));
-			cout << i << ' ' << camera_parameters[enough_number[i]].Rotation << endl;
 			problem->AddResidualBlock(cost_function, NULL, rot, trans);
 		}
 	}

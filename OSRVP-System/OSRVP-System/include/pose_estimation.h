@@ -55,7 +55,7 @@ private:
 	
 	int enough_number[5] = { 0 };
 	int number_enough_corners = 0;
-	cv::Mat rvec, tvec, R, R_cam;
+	cv::Mat rvec, tvec, R, R_cam, Rotcam;
 	vector<cv::Point3f> world_points, pts1, pts2;
 	vector<cv::Point2f> image_points, imgpts1, imgpts2;
 	int registrated_point_cnt = 0;

@@ -48,7 +48,7 @@ vector<corner_pos_with_ID> readMarker(Mat& image);
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters);
 void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters);
 
-int start_time, last_time = 0;
+int time_start, time_end = 0;
 
 void WaitForKeyPress(void)
 {
@@ -61,10 +61,10 @@ void WaitForKeyPress(void)
 
 void WorkThread(void* handle[5]) {
     while (1) {
-        start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        cout << 1000.0 / (start_time - last_time) << endl;
-        last_time = start_time;
-
+        time_start = GetTickCount();
+        cout << "Time = " << 1000.0 / (time_start - time_end) << "FPS\n ";
+        time_end = time_start;
+        
         corner_pos_ID.clear();
         for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
             nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
@@ -72,7 +72,7 @@ void WorkThread(void* handle[5]) {
             {
                 image = Convert2Mat(stImageInfo[i]);
                 if (i == 0)  image_firstcam = image.clone();
-                imwrite("image.bmp", image);
+                //imwrite("image.bmp", image);
                 //Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
                 Rect roi(Box[i].position.x, Box[i].position.y, Box[i].width, Box[i].height);
                 image_crop = image(roi);
@@ -213,7 +213,6 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
         corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
     }
     
-    cout << -start_time + last_time << endl;
     return corner_pos;
 }
 
@@ -236,7 +235,7 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
     }
     
     for (int num = 0; num < stDeviceList.nDeviceNum; num++) {
-        cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
+        cnt = 1, x_min = ImgParamsOri.width, y_min = ImgParamsOri.height, x_max = -1, y_max = -1;
         imagePoints.clear();
         Mat Rot = Mat::zeros(3, 3, CV_32FC1);
         Rodrigues(Pose.rotation, Rot);
@@ -252,8 +251,8 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
             if (ceil(imagePoints[i].y) > y_max) y_max = ceil(imagePoints[i].y);
         }
         Box[num].position = Point(max(0, x_min - BoxBorder), max(0, y_min - BoxBorder));
-        Box[num].width = min(x_max - x_min + BoxBorder * 2, ImgParamsOri.width - Box[num].position.x);
-        Box[num].height = min(y_max - y_min + BoxBorder * 2, ImgParamsOri.height - Box[num].position.y);
+        Box[num].width = min(x_max - x_min + BoxBorder * 2, ImgParamsOri.width - Box[num].position.x - 1);
+        Box[num].height = min(y_max - y_min + BoxBorder * 2, ImgParamsOri.height - Box[num].position.y - 1);
         Box[num].lostFrame = 0;
     }
 }
