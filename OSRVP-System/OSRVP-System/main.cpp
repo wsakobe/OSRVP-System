@@ -62,7 +62,7 @@ void WaitForKeyPress(void)
 void WorkThread(void* handle[5]) {
     while (1) {
         time_start = GetTickCount();
-        cout << "Time = " << 1000.0 / (time_start - time_end) << "FPS\n ";
+        //cout << "Time = " << 1000.0 / (time_start - time_end) << "FPS\n ";
         time_end = time_start;
         
         corner_pos_ID.clear();
@@ -197,11 +197,11 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
     ImgParams.height = image_gray.rows;
     ImgParams.width = image_gray.cols;
     
-    start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
-    last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+   // last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);
     
@@ -393,7 +393,7 @@ bool initCamera() {
         memset(&stImageInfo[i], 0, sizeof(MV_FRAME_OUT_INFO_EX));
         pData[i] = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
     }
-
+    cout << "Camera number: " << stDeviceList.nDeviceNum << endl;
     return true;
 }
 
@@ -418,7 +418,58 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     for (int i = 1; i < axesPoints.size(); i++) {
-        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 100, 200), 3);
+        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+    }
+
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 1; i < 7; i++)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 7; i < 35; i += 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 35; i >= 29; i--)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 29; i >= 1; i -= 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
+    for (int i = 1; i < axesPoints.size(); i++) {
+        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+    }
+
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 101; i < 105; i++)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 105; i < 133; i += 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 133; i >= 127; i--)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 127; i >= 106; i -= 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
+    for (int i = 1; i < axesPoints.size(); i++) {
+        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
+        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+    }
+
+    axesPoints.clear();
+    imagePoints.clear();
+    for (int i = 64; i < 70; i++)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 70; i < 98; i += 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 98; i >= 92; i--)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+    for (int i = 92; i >= 64; i -= 7)
+        axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
+
+    projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
+    for (int i = 1; i < axesPoints.size(); i++) {
+        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
     

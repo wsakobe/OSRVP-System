@@ -94,7 +94,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 	registrated_point_cnt = 0;
 	for (int i = 0; i < corner_set[enough_number[0]].size(); i++)
 		for (int j = 0; j < corner_set[enough_number[1]].size(); j++) {
-			if ((corner_set[enough_number[0]][i].ID == corner_set[enough_number[1]][j].ID) && (model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0 > 1e-2)) {
+			if ((corner_set[enough_number[0]][i].ID == corner_set[enough_number[1]][j].ID) && (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2)) {
 				imgpts1.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 				imgpts2.push_back(corner_set[enough_number[1]][j].subpixel_pos);
 				pts1.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
@@ -134,6 +134,10 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		Mat pm2 = (Mat_<float>(3, 1) << p2.x, p2.y, p2.z);
 		
 		tvec = pm2 - R * pm1;
+
+		cout << pts2 << endl;
+		cout << R << endl;
+		cout << tvec << endl;
 
 		Rodrigues(R, rvec);
 				
@@ -176,20 +180,21 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		Files << Pose6D.translation << endl;
 		Files.close();
 
+		world_points.clear();
+		image_points.clear();
+		for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
+			if (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2) {
+				world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
+				image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
+			}
+		}
+		vector<Point2f> imagePoints;
+		projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
 		float reprojection_error = 0;
-		Eigen::Matrix<float, 3, 3> R_eigen;
-		Eigen::Matrix<float, 3, 1> T_eigen;
-		cv::cv2eigen(R, R_eigen);
-		cv::cv2eigen(tvec, T_eigen);
-		for (int i = 0; i < pts1.size(); i++) {
-			Eigen::MatrixXf PT1(3, 1);
-			PT1 << pts1[i].x, pts1[i].y, pts1[i].z;
-			Eigen::MatrixXf PT2(3, 1);
-			PT2 << pts2[i].x, pts2[i].y, pts2[i].z;
-			PT1 = R_eigen * PT1 + T_eigen;
-			reprojection_error += (PT1 - PT2).norm();
-		}			
-		//cout << reprojection_error / pts1.size() << endl;
+		for (int i = 0; i < imagePoints.size(); i++) {
+			reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
+		}
+		cout << "Before BA RE: " << reprojection_error / imagePoints.size();
 	}
 }
 
@@ -199,8 +204,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 		world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
 		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 	}
-	//undistortPoints(image_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, noArray(), camera_parameters[enough_number[0]].Intrinsic);
-
+	
 	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
@@ -229,7 +233,6 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
-
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
@@ -239,7 +242,6 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Pose6D.recovery = true;
 
 	//Print into files
-	/*
 	Mat tracking_point(3, 1, CV_32FC1);
 	tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
 	tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
@@ -260,7 +262,6 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Files.open(fname, ios::app);
 	Files << tvec << endl;
 	Files.close();
-	*/
 }
 
 void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
@@ -294,17 +295,18 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	world_points.clear();
 	image_points.clear();
 	for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
-		world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
-		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
+		if (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2) {
+			world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
+			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
+		}
 	}
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
-
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}
-	//cout << "After BA RE: " << reprojection_error / imagePoints.size() << endl;
+	cout << "  After BA RE: " << reprojection_error / imagePoints.size() << endl;
 
 	//Print into files
 	Mat R;
@@ -361,12 +363,12 @@ void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, cons
 		{
 			Mat x = pts_4d.col(i);
 			x /= x.at<float>(3, 0); // πÈ“ªªØ
-			Point3d p(
+			Point3f p(
 				x.at<float>(0, 0),
 				x.at<float>(1, 0),
 				x.at<float>(2, 0)
 			);
-			points.push_back((Point3f)p);
+			points.push_back(p);
 		}
 }
 
@@ -389,9 +391,11 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 
 	for (int i = 0; i < number_enough_corners; ++i) {
 		for (int j = 0; j < corner_set[i].size(); j++) {
-			CostFunction* cost_function;
-			cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D[corner_set[i][j].ID][0], model_3D[corner_set[i][j].ID][1], model_3D[corner_set[i][j].ID][2]));
-			problem->AddResidualBlock(cost_function, NULL, rot, trans);
+			if (abs(model_3D[corner_set[i][j].ID][0] - 0.0) > 1e-2) {
+				CostFunction* cost_function;
+				cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D[corner_set[i][j].ID][0], model_3D[corner_set[i][j].ID][1], model_3D[corner_set[i][j].ID][2]));
+				problem->AddResidualBlock(cost_function, NULL, rot, trans);
+			}
 		}
 	}
 }
