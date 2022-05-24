@@ -25,7 +25,7 @@ vector<vector<corner_pos_with_ID>> corner_pos_ID;
 PoseInformation Pose;
 DynamicROIBox Box[5];
 int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
-int BoxBorder = 10;
+int BoxBorder = 30;
 bool g_bExit = false;
 
 //HikVision Camera Preparation
@@ -393,7 +393,7 @@ bool initCamera() {
         memset(&stImageInfo[i], 0, sizeof(MV_FRAME_OUT_INFO_EX));
         pData[i] = (unsigned char*)malloc(sizeof(unsigned char) * (g_nPayloadSize));
     }
-    cout << "Camera number: " << stDeviceList.nDeviceNum << endl;
+    
     return true;
 }
 

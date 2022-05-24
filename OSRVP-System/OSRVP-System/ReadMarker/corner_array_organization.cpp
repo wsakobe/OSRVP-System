@@ -58,8 +58,8 @@ int *ArrayOrganization::delaunayTriangulation(Mat& img, vector<cornerInformation
 }
 
 void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cornerPoints){
-    //Mat imgMark(img.rows, img.cols, CV_32FC3);
-    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     memset(selection, true, sizeof(selection));
 
@@ -103,12 +103,12 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
         else
             it++;
     }
-    /*
+    
     for (int i = 0; i < edge_list_ID.size(); i++)
         line(imgMark, cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel, Scalar(100, 0, 100), 2, LINE_AA, 0);
 
-    imshow("Delaunay", imgMark);
-    waitKey(0);*/
+    //imshow("Delaunay", imgMark);
+    //waitKey(1);
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
