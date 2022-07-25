@@ -61,13 +61,13 @@ void WaitForKeyPress(void)
 
 void WorkThread(void* handle[5]) {
     while (1) {
-        time_start = GetTickCount();
+        time_start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         //cout << "Time = " << 1000.0 / (time_start - time_end) << "FPS\n ";
         time_end = time_start;
         
         corner_pos_ID.clear();
         for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 1000);
+            nRet[i] = MV_CC_GetImageBuffer(handle[i], &stImageInfo[i], 50);
             if (nRet[i] == MV_OK)
             {
                 image = Convert2Mat(stImageInfo[i]);
@@ -100,7 +100,7 @@ void WorkThread(void* handle[5]) {
             imshow("image_pose", image_firstcam);
             waitKey(1);
         }
-        dynamicROI(Pose, camera_parameters);
+        //dynamicROI(Pose, camera_parameters);
 
         plotModel(image_firstcam, Pose, camera_parameters);
                 
@@ -407,13 +407,13 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 37; i < 42; i++)
+    for (int i = 225; i < 233; i++)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 42; i < 63; i += 7)
+    for (int i = 161; i < 226; i += 16)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 63; i >= 58; i--)
+    for (int i = 168; i >= 161; i--)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 58; i >= 37; i -= 7)
+    for (int i = 232; i >= 168; i -= 16)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
@@ -421,7 +421,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
-
+    /*
     axesPoints.clear();
     imagePoints.clear();
     for (int i = 1; i < 7; i++)
@@ -438,7 +438,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
-
+    
     axesPoints.clear();
     imagePoints.clear();
     for (int i = 101; i < 105; i++)
@@ -455,7 +455,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
-
+    
     axesPoints.clear();
     imagePoints.clear();
     for (int i = 64; i < 70; i++)
@@ -472,7 +472,7 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
         line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
         //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
     }
-    
+    */
     //»æÖÆÄ©¶ËÖ´ÐÐÆ÷Î»×Ë
     axesPoints.clear();
     for (int i = 0; i < Pose.tracking_points.size(); i++)

@@ -31,17 +31,18 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 						pixel_center = img.ptr<float>((int)center_location.y)[(int)center_location.x];
 						ave_pixel_around = (img.ptr<float>((int)left_location.y)[(int)left_location.x] + img.ptr<float>((int)right_location.y)[(int)right_location.x] + img.ptr<float>((int)up_location.y)[(int)up_location.x] + img.ptr<float>((int)down_location.y)[(int)down_location.x]) /4;
 						
-						if (abs(pixel_center - ave_pixel_around) > T_pixel) 
+						if (abs(pixel_center - ave_pixel_around) > T_pixel_far) 
 							dot_recovery[i][j][k] = 1;
-						else 
+						else if (abs(pixel_center - ave_pixel_around) < T_pixel_near)
 							dot_recovery[i][j][k] = 0;
+						else
+							dot_recovery[i][j][k] = -1;
 					}
 				}
 			}
 	}	
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.8);
-
 	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);

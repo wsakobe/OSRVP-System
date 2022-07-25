@@ -102,6 +102,8 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 				continue;
 			}
 		}
+
+	// pts1 -> World frame; pts2 -> Cam frame
 	if (registrated_point_cnt > 8) {
 		triangulation(imgpts1, imgpts2, pts2, camera_parameters[enough_number[0]], camera_parameters[enough_number[1]]);
 		Point3f p1, p2;
@@ -110,31 +112,31 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 			p2 += pts2[i];
 		}
 		int n = pts1.size();
+
 		p1 = p1 / n; p2 = p2 / n;
-		Mat q1 = Mat(3, 1, CV_32FC1);
-		Mat q2 = Mat(1, 3, CV_32FC1);
+		Mat q_cam = Mat(3, 1, CV_32FC1);
+		Mat q_world = Mat(1, 3, CV_32FC1);
 		Mat W = Mat::zeros(3, 3, CV_32FC1);
 		Mat R, tvec, rvec;
 		for (int i = 0; i < pts1.size(); i++) {
-			q1.ptr<float>(0)[0] = pts1[i].x - p1.x;
-			q1.ptr<float>(1)[0] = pts1[i].y - p1.y;
-			q1.ptr<float>(2)[0] = pts1[i].z - p1.z;
-			q2.ptr<float>(0)[0] = pts2[i].x - p2.x;
-			q2.ptr<float>(0)[1] = pts2[i].y - p2.y;
-			q2.ptr<float>(0)[2] = pts2[i].z - p2.z;
-			W = W + q1 * q2;
+			q_cam.ptr<float>(0)[0] = pts2[i].x - p2.x;
+			q_cam.ptr<float>(1)[0] = pts2[i].y - p2.y;
+			q_cam.ptr<float>(2)[0] = pts2[i].z - p2.z;
+			q_world.ptr<float>(0)[0] = pts1[i].x - p1.x;
+			q_world.ptr<float>(0)[1] = pts1[i].y - p1.y;
+			q_world.ptr<float>(0)[2] = pts1[i].z - p1.z;
+			W = W + q_cam * q_world;
 		}
 		Mat U, S, Vt;
 		SVDecomp(W, S, U, Vt);
 		
 		R = U * Vt;
-		R = R.t();
 		
-		Mat pm1 = (Mat_<float>(3, 1) << p1.x, p1.y, p1.z);
-		Mat pm2 = (Mat_<float>(3, 1) << p2.x, p2.y, p2.z);
+		Mat pm_world = (Mat_<float>(3, 1) << p1.x, p1.y, p1.z);
+		Mat pm_cam = (Mat_<float>(3, 1) << p2.x, p2.y, p2.z);
 		
-		tvec = pm2 - R * pm1;
-
+		tvec = pm_cam - R * pm_world;
+		
 		Rodrigues(R, rvec);
 				
 		string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
@@ -186,6 +188,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		}
 		vector<Point2f> imagePoints;
 		projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
+		
 		float reprojection_error = 0;
 		for (int i = 0; i < imagePoints.size(); i++) {
 			reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
@@ -212,7 +215,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	tvec = camera_parameters[enough_number[0]].Rotation.t() * tvec - camera_parameters[enough_number[0]].Rotation.t() * camera_parameters[enough_number[0]].Translation;
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
-
+	cout << R << endl << tvec << endl;
 	string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
 	string cameraParametersName = filePath + "cameraParams.yml";
 	FileStorage fs(cameraParametersName, FileStorage::READ);
@@ -350,7 +353,7 @@ void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, cons
 		pts_1.push_back(pixel2cam(points_left[i],  camera_parameter1.Intrinsic));
 		pts_2.push_back(pixel2cam(points_right[i], camera_parameter2.Intrinsic));
 	}
-	
+
 	triangulatePoints(mLeftRT, mRightRT, pts_1, pts_2, pts_4d);
 
 	// 转换成非齐次坐标

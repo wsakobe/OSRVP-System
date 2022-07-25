@@ -112,8 +112,8 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
 }
 
 void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInformation> cornerPoints){
-    //Mat imgMark(img.rows, img.cols, CV_32FC3);
-    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     int matrix_number = 0;
     vector<matrixInform> corner_IDs(cornerPoints.size());
@@ -183,7 +183,8 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
     }
 
     imshow("Organization", imgMark);
-    waitKey(0);*/
+    waitKey(1);
+    */
 }
 
 inline float ArrayOrganization::edgeDistance2(Point2f a, Point2f b) {

@@ -30,7 +30,7 @@ private:
 	void countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints);
 	void init(int* p, struct valueMatrix* vm, int(*d)[30]);
 
-	float pixel_center, ave_pixel_around, T_pixel = 0.25;
+	float pixel_center, ave_pixel_around, T_pixel_far = 0.25, T_pixel_near = 0.1;
 	int matrix_with_ID[5][2 * number_of_corner_x][2 * number_of_corner_y], dot_recovery[5][2 * number_of_corner_x][2 * number_of_corner_y], dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
 	int matrix_value, number_all, number_succ;
 
