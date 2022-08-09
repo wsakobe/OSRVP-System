@@ -71,29 +71,30 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
         dist_min = edgeDistance2(cornerPoints[edge_list_ID[0].x].point_in_subpixel, cornerPoints[edge_list_ID[0].y].point_in_subpixel);
     }
 
-    for (int i = 0; i < edge_list_ID.size() - 1; i++)
-    {
-        if (edge_list_ID[i + 1].x == last_ID) {
-            dist_now = edgeDistance2(cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel);
-            if (dist_now < dist_min)
-                dist_min = dist_now;
-        }
-        else {
-            for (int j = last_ID_pos; j <= i; j++)
-                if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 2 * dist_min) {
-                    selection[j] = false;
-                    for (int k = 0; k < edge_list_ID.size(); k++)
-                        if ((edge_list_ID[k].y == edge_list_ID[j].x) && (edge_list_ID[k].x == edge_list_ID[j].y))
-                            selection[k] = false;
-                }
+    if (edge_list_ID.size() > 1)
+        for (int i = 0; i < edge_list_ID.size() - 1; i++)
+        {
+            if (edge_list_ID[i + 1].x == last_ID) {
+                dist_now = edgeDistance2(cornerPoints[edge_list_ID[i].x].point_in_subpixel, cornerPoints[edge_list_ID[i].y].point_in_subpixel);
+                if (dist_now < dist_min)
+                    dist_min = dist_now;
+            }
+            else {
+                for (int j = last_ID_pos; j <= i; j++)
+                    if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 1.5 * dist_min) {
+                        selection[j] = false;
+                        for (int k = 0; k < edge_list_ID.size(); k++)
+                            if ((edge_list_ID[k].y == edge_list_ID[j].x) && (edge_list_ID[k].x == edge_list_ID[j].y))
+                                selection[k] = false;
+                    }
                     
-            if (i != edge_list_ID.size() - 1) {
-                last_ID = edge_list_ID[i + 1].x;
-                last_ID_pos = i + 1;
-                dist_min = MAX_DISTANCE;
-            }            
+                if (i != edge_list_ID.size() - 1) {
+                    last_ID = edge_list_ID[i + 1].x;
+                    last_ID_pos = i + 1;
+                    dist_min = MAX_DISTANCE;
+                }            
+            }
         }
-    }
 
     int cnt = 0;
     for (vector<Point>::iterator it = edge_list_ID.begin(); it != edge_list_ID.end();)

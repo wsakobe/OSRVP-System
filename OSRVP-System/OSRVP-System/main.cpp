@@ -10,7 +10,7 @@ using namespace std;
 
 //ReadMarker Preparation
 int camera_number, tracking_number, number_of_corner_x_input, number_of_corner_y_input;
-vector<CameraParams> camera_parameters;
+vector<CameraParams> camera_parameters, endo_parameter;
 CameraParams cam;
 valueMatrix value_matrix[1025];
 float model_3D[number_of_corner_x * number_of_corner_y][3];
@@ -42,11 +42,13 @@ Mat image, image_crop, image_gray, image_firstcam;
 vector<Point3f> axesPoints;
 vector<Point2f> imagePoints;
 
-void initModel();
+void initData();
 bool initCamera();
 vector<corner_pos_with_ID> readMarker(Mat& image);
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters);
 void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters);
+void readCamera(bool camera_type);
+void readFile();
 
 int time_start, time_end = 0;
 
@@ -93,7 +95,7 @@ void WorkThread(void* handle[5]) {
         }
         
         PoseEstimation pE;
-        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
         
         if (!Pose.recovery) {
             //cout << "Fail to localize the model!" << endl;
@@ -113,74 +115,12 @@ void WorkThread(void* handle[5]) {
 }
 
 int main(int argc, char* argv[]) {
-    initModel();
+    initData();
     google::InitGoogleLogging(argv[0]);
     
-    //工业相机实时视频流
-    if (!initCamera()) return 0;
+    readCamera(USBCamera);
+    //readFile();
     
-    do {
-        std::thread thread_1(WorkThread, handle);
-        thread_1.detach();
-
-#pragma region AfterThread
-
-        printf("Press [ Esc ] to stop grabbing.\n");
-        WaitForKeyPress();
-
-        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_CloseDevice(handle[i]);
-            if (MV_OK != nRet[i])
-            {
-                printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
-                break;
-            }
-        }
-        // Destroy handle
-        for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
-            nRet[i] = MV_CC_DestroyHandle(handle[i]);
-            if (MV_OK != nRet[i])
-            {
-                printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
-                break;
-            }
-        }
-        printf("Device successfully closed.\n");
-    } while (0);
-    
-#pragma endregion
-    
-    //视频流处理
-    /*
-    //VideoCapture capture;
-    //image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
-    image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
-
-    //capture.read(image);
-    stDeviceList.nDeviceNum = 1;
-    //while (capture.read(image)) {
-        //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
-        Rect roi(Box[0].position.x, Box[0].position.y, Box[0].width, Box[0].height);
-        image_crop = image(roi);
-        //image_crop.copyTo(mask(roi));
-        //imshow("DynamicROI", mask);
-        //waitKey(1);
-
-        corner_pos_ID.push_back(readMarker(image_crop));
-
-        for (int i = 0; i < corner_pos_ID[0].size(); i++)  corner_pos_ID[0][i].subpixel_pos += Point2f(Box[0].position);
-        PoseEstimation pE;
-        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum);
-
-        if (!Pose.recovery) {
-            //cout << "Fail to localize the model!" << endl;
-            imshow("image_pose", image);
-            waitKey(1);
-        }
-        dynamicROI(Pose, camera_parameters);
-        //plotModel(image, Pose, camera_parameters);
-    //}
-    */
     destroyAllWindows();
     return 0;
 }
@@ -205,13 +145,11 @@ vector<corner_pos_with_ID> readMarker(Mat& image) {
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);
     
-    if (cornerPoints.size() > 4) {
-        ArrayOrganization arrayOrg;
-        int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
+    ArrayOrganization arrayOrg;
+    int* matrix_p = arrayOrg.delaunayTriangulation(image_gray, cornerPoints);
         
-        IdentifyMarker identify;
-        corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
-    }
+    IdentifyMarker identify;
+    corner_pos = identify.identifyMarker(image_gray, matrix_p, cornerPoints, value_matrix, dot_matrix);
     
     return corner_pos;
 }
@@ -257,7 +195,7 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
     }
 }
 
-void initModel() {
+void initData() {
     string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
     string modelName = filePath + "Model3D.txt";
     string valueMatrixName = filePath + "valueMatrix.txt";
@@ -330,6 +268,15 @@ void initModel() {
         camera_parameters.push_back(cam);
     }
 
+    string cameraMatrixEndo = "cameraMatrixEndoscopy";
+    string distCoeffsEndo = "distCoeffsEndoscopy";
+    memset((void*)&cam, 0x00, sizeof(cam));
+    fs[cameraMatrixEndo] >> cam.Intrinsic;
+    fs[distCoeffsEndo] >> cam.Distortion;
+    cam.Rotation = Mat::zeros(3, 3, CV_32FC1);
+    cam.Translation = Mat::zeros(3, 1, CV_32FC1);
+    endo_parameter.push_back(cam);
+
     fs.release();    	//close the file opened
 }
 
@@ -395,6 +342,123 @@ bool initCamera() {
     }
     
     return true;
+}
+
+void readCamera(bool camera_type) {
+    if (camera_type == HikingCamera) {
+        //工业相机实时视频流
+        if (!initCamera()) return;
+
+        do {
+            std::thread thread_1(WorkThread, handle);
+            thread_1.detach();
+
+#pragma region AfterThread
+
+            printf("Press [ Esc ] to stop grabbing.\n");
+            WaitForKeyPress();
+
+            for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+                nRet[i] = MV_CC_CloseDevice(handle[i]);
+                if (MV_OK != nRet[i])
+                {
+                    printf("Close Device fail! nRet [0x%x]\n", nRet[i]);
+                    break;
+                }
+            }
+            // Destroy handle
+            for (int i = 0; i < stDeviceList.nDeviceNum; i++) {
+                nRet[i] = MV_CC_DestroyHandle(handle[i]);
+                if (MV_OK != nRet[i])
+                {
+                    printf("Destroy Handle fail! nRet [0x%x]\n", nRet[i]);
+                    break;
+                }
+            }
+            printf("Device successfully closed.\n");
+        } while (0);
+
+#pragma endregion
+    }
+
+    if (camera_type == USBCamera) {
+        VideoCapture cap(0);
+
+        cap.set(CAP_PROP_FRAME_WIDTH, 1920);
+        cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
+        cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        
+        if (!cap.isOpened())
+        {
+            cout << "couldn't open capture." << endl;
+            return;
+        }
+
+        Mat image;
+        while (true) {
+            cap >> image;
+            corner_pos_ID.clear();
+            //Rect roi_left(Box[0].position.x, Box[0].position.y, Box[0].width, Box[0].height);
+            corner_pos_ID.push_back(readMarker(image));
+
+            for (int i = 0; i < 1; i++)
+                for (int j = 0; j < corner_pos_ID[i].size(); j++)
+                    corner_pos_ID[i][j].subpixel_pos += Point2f(Box[i].position);
+            
+            PoseEstimation pE;
+            Pose = pE.poseEstimation(corner_pos_ID, endo_parameter, model_3D, 1, USBCamera);
+
+            if (!Pose.recovery) {
+                cout << "Fail to localize the model!" << endl;
+                imshow("Image Pose", image);
+                waitKey(1);
+            }
+            else {
+                axesPoints.push_back(Point3f(6, 12, 0));
+                axesPoints.push_back(Point3f(6, 17, 0));
+                axesPoints.push_back(Point3f(11, 12, 0));
+                axesPoints.push_back(Point3f(6, 12, -5));
+                projectPoints(axesPoints, Pose.rotation, Pose.translation, endo_parameter[0].Intrinsic, endo_parameter[0].Distortion, imagePoints);
+                line(image, imagePoints[0], imagePoints[1], Scalar(0, 224, 158), 2);
+                line(image, imagePoints[0], imagePoints[2], Scalar(224, 0, 158), 2);
+                line(image, imagePoints[0], imagePoints[3], Scalar(40, 120, 58), 2);
+                imshow("Image Pose", image);
+                waitKey(1);
+            }
+            //dynamicROI(Pose, camera_parameters);
+        }
+    }
+}
+
+void readFile() {
+    VideoCapture capture;
+    image = capture.open("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\left.avi");
+    //image = imread("F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\image.bmp");
+
+    capture.read(image);
+    stDeviceList.nDeviceNum = 1;
+    while (capture.read(image)) {
+        //Mat mask = Mat::zeros(image.rows, image.cols, CV_32FC3);
+        Rect roi(Box[0].position.x, Box[0].position.y, Box[0].width, Box[0].height);
+        image_crop = image(roi);
+        //image_crop.copyTo(mask(roi));
+        //imshow("DynamicROI", mask);
+        //waitKey(1);
+
+        corner_pos_ID.push_back(readMarker(image_crop));
+
+        for (int i = 0; i < corner_pos_ID[0].size(); i++)  corner_pos_ID[0][i].subpixel_pos += Point2f(Box[0].position);
+        PoseEstimation pE;
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
+
+        if (!Pose.recovery) {
+            cout << "Fail to localize the model!" << endl;
+            imshow("image_pose", image);
+            waitKey(1);
+        }
+        dynamicROI(Pose, camera_parameters);
+        plotModel(image, Pose, camera_parameters);
+    }
 }
 
 void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_parameters) {

@@ -30,7 +30,7 @@
     <ClCompile Include="ReadMarker\identify_marker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="include\pose_estimation.cpp">
+    <ClCompile Include="ReadMarker\pose_estimation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

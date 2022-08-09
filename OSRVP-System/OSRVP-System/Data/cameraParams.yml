@@ -49,6 +49,19 @@ Translation2: !!opencv-matrix
    cols: 1
    dt: f
    data: [ -199.489654986241, -0.974282757501992, 3.04521431746889 ]
+
+cameraMatrixEndoscopy: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: f
+   data: [ 1074.62215925417, 0., 617.880017107200, 0.,
+       1072.63407433598, 367.934035987837, 0., 0., 1. ]
+distCoeffsEndoscopy: !!opencv-matrix
+   rows: 5
+   cols: 1
+   dt: f
+   data: [0.0276, 0.0149, 0, 0, -0.1898 ]
+
 trackingNumber: 1
 TrackingPoint1: !!opencv-matrix
    rows: 3

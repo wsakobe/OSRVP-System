@@ -16,6 +16,9 @@ using namespace ceres;
 
 #define maxLostFrame 3
 
+#define HikingCamera 0
+#define USBCamera 1
+
 struct PoseInformation {
 	cv::Mat rotation, translation;
 	vector<cv::Point3f> tracking_points;
@@ -40,9 +43,10 @@ public:
 	PoseEstimation();
 	~PoseEstimation();
 
-	PoseInformation poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num);
+	PoseInformation poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num, bool camera_type);
 	void poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
 	void poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
+	void poseEstimationPlanar(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters);
 	void bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]);
 
 	PoseInformation Pose6D;

@@ -141,8 +141,8 @@ void FinalElection::fitQuadraticSurface(Mat& img, vector<cornerPreInfo> corners)
 }
 
 void FinalElection::templateMatching(Mat& img) {
-    //Mat imgMark(img.rows, img.cols, CV_32FC3);
-    //cvtColor(img, imgMark, COLOR_GRAY2RGB);
+    Mat imgMark(img.rows, img.cols, CV_32FC3);
+    cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
     for (int i = 0; i < cornerPoints.size(); i++) {
         //edge_angle = cornerPoints[i].angle_black_edge - cornerPoints[i].angle_white_edge;
