@@ -95,7 +95,7 @@ void WorkThread(void* handle[5]) {
         }
         
         PoseEstimation pE;
-        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
+        //Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
         
         if (!Pose.recovery) {
             //cout << "Fail to localize the model!" << endl;
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     initData();
     google::InitGoogleLogging(argv[0]);
     
-    readCamera(USBCamera);
+    readCamera(HikingCamera);
     //readFile();
     
     destroyAllWindows();
@@ -197,9 +197,10 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
 
 void initData() {
     string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
+    string markerType = "15x14";
     string modelName = filePath + "Model3D.txt";
-    string valueMatrixName = filePath + "valueMatrix.txt";
-    string dotMarixName = filePath + "dotMatrix.txt";
+    string valueMatrixName = filePath + "valueMatrix_" + markerType + ".txt";
+    string dotMarixName = filePath + "dotMatrix_" + markerType + ".txt";
     string cameraParametersName = filePath + "cameraParams.yml";
 
     ifstream Files;
@@ -238,7 +239,7 @@ void initData() {
     Files >> number_of_corner_x_input >> number_of_corner_y_input;
     for (int i = 0; i < number_of_corner_x_input; i++)
         for (int j = 0; j < number_of_corner_y_input; j++)
-            Files >> dot_matrix[i][j];
+            Files >> dot_matrix[j][i];
 
     FileStorage fs(cameraParametersName, FileStorage::READ);
 

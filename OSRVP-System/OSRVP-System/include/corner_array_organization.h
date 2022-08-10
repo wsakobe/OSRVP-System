@@ -36,7 +36,7 @@ private:
 	cv::Point directionJudge(float angle, cornerInformation corner_1, cornerInformation corner_2);
 	bool  angleJudge(float angle1, float angle2);
 
-	const float maxCornerDistance = 60.0, maxCornerAngle = 15.0, maxCornerAngleInOrg = 15.0;
+	const float maxCornerDistance = 60.0, maxCornerAngle = 15.0, maxCornerAngleInOrg = 20.0;
 	float edge_angle, angle_oppo;
 	float dist_now, dist_min = 1000.0;
 

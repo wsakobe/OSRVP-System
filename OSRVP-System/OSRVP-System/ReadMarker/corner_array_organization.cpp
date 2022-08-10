@@ -81,7 +81,7 @@ void ArrayOrganization::removeWrongEdges(Mat& img, vector<cornerInformation> cor
             }
             else {
                 for (int j = last_ID_pos; j <= i; j++)
-                    if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 1.5 * dist_min) {
+                    if (edgeDistance2(cornerPoints[edge_list_ID[j].x].point_in_subpixel, cornerPoints[edge_list_ID[j].y].point_in_subpixel) > 1.6 * dist_min) {
                         selection[j] = false;
                         for (int k = 0; k < edge_list_ID.size(); k++)
                             if ((edge_list_ID[k].y == edge_list_ID[j].x) && (edge_list_ID[k].x == edge_list_ID[j].y))
@@ -174,7 +174,6 @@ void ArrayOrganization::organizeCornersIntoArrays(Mat& img, vector<cornerInforma
         }
         if (matrix_number > 5) break;
     }
-    
     /*
     for (int i = 0; i < cornerPoints.size(); i++) {
         std::stringstream ss;
