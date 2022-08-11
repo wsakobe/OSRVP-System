@@ -75,7 +75,20 @@ PoseEstimation::~PoseEstimation()
 PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num, bool camera_type)
 {
 	Pose6D.recovery = false;
-
+	vector<Point2f> corners_ori, corners_undistort;
+	for (int i = 0; i < camera_num; i++) {
+		if (corner_set[i].size() > 5) {
+			corners_ori.clear();
+			corners_undistort.clear();
+			for (int j = 0; j < corner_set[i].size(); j++)
+				corners_ori.push_back(corner_set[i][j].subpixel_pos);
+			cout << camera_parameters[i].Distortion << endl;
+			undistortPoints(corners_ori, corners_undistort, camera_parameters[i].Intrinsic, camera_parameters[i].Distortion, noArray(), camera_parameters[i].Intrinsic);
+			for (int j = 0; j < corner_set[i].size(); j++)
+				corner_set[i][j].subpixel_pos = corners_undistort[j];
+		}
+	}
+		
 	if (camera_type == HikingCamera) {
 		for (int i = 0; i < camera_num; i++) {
 			if (corner_set[i].size() > 5) {
@@ -173,17 +186,17 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		sprintf(fname, "rot1.txt");
 		ofstream Files;
 		Files.open(fname, ios::app);
-		Files << R << endl;
+		Files << format(R, cv::Formatter::FMT_CSV) << endl;
 		Files.close();
 
 		sprintf(fname, "end1.txt");
 		Files.open(fname, ios::app);
-		Files << R * tracking_point + Pose6D.translation << endl;
+		Files << format(R * tracking_point + tvec, cv::Formatter::FMT_CSV) << endl;
 		Files.close();
 
 		sprintf(fname, "trans1.txt");
 		Files.open(fname, ios::app);
-		Files << Pose6D.translation << endl;
+		Files << format(tvec, cv::Formatter::FMT_CSV) << endl;
 		Files.close();
 
 		world_points.clear();
@@ -213,7 +226,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 		}
 	}
-	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, NULL, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
@@ -223,7 +236,6 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	tvec = camera_parameters[enough_number[0]].Rotation.t() * tvec - camera_parameters[enough_number[0]].Rotation.t() * camera_parameters[enough_number[0]].Translation;
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
-	cout << R << endl << tvec << endl;
 	string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
 	string cameraParametersName = filePath + "cameraParams.yml";
 	FileStorage fs(cameraParametersName, FileStorage::READ);
@@ -257,17 +269,17 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	sprintf(fname, "rot1.txt");
 	ofstream Files;
 	Files.open(fname, ios::app);
-	Files << R << endl;
+	Files << format(R, cv::Formatter::FMT_CSV) << endl;
 	Files.close();
 
 	sprintf(fname, "end1.txt");
 	Files.open(fname, ios::app);
-	Files << R * tracking_point + tvec << endl;
+	Files << format(R * tracking_point + tvec, cv::Formatter::FMT_CSV) << endl;
 	Files.close();
 
 	sprintf(fname, "trans1.txt");
 	Files.open(fname, ios::app);
-	Files << tvec << endl;
+	Files << format(tvec, cv::Formatter::FMT_CSV) << endl;
 	Files.close();
 }
 
@@ -352,7 +364,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	Solver::Summary summary;
 
 	Solve(options, &problem, &summary);
-	//std::cout << summary.BriefReport() << "\n";
+	std::cout << summary.BriefReport() << "\n";
 
 	Pose6D.rotation.at<float>(0, 0) = rot[0];
 	Pose6D.rotation.at<float>(1, 0) = rot[1];
@@ -376,30 +388,32 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}
 	cout << "  After BA RE: " << reprojection_error / imagePoints.size() << endl;
-	 
-	//Print into files
-	Mat R;
-	Mat tracking_point(3, 1, CV_32FC1);
-	tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
-	tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
-	tracking_point.at<float>(2, 0) = Pose6D.tracking_points[0].z;
-	Rodrigues(Pose6D.rotation, R);
-	char fname[256];
-	sprintf(fname, "rot2.txt");
-	ofstream Files;
-	Files.open(fname, ios::app);
-	Files << R << endl;
-	Files.close();
+	
+	if (reprojection_error / imagePoints.size() < 0.5) {
+		//Print into files
+		Mat R;
+		Mat tracking_point(3, 1, CV_32FC1);
+		tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
+		tracking_point.at<float>(1, 0) = Pose6D.tracking_points[0].y;
+		tracking_point.at<float>(2, 0) = Pose6D.tracking_points[0].z;
+		Rodrigues(Pose6D.rotation, R);
+		char fname[256];
+		sprintf(fname, "rot2.txt");
+		ofstream Files;
+		Files.open(fname, ios::app);
+		Files << format(R, cv::Formatter::FMT_CSV) << endl;
+		Files.close();
 
-	sprintf(fname, "end2.txt");
-	Files.open(fname, ios::app);
-	Files << R * tracking_point + Pose6D.translation << endl;
-	Files.close();
+		sprintf(fname, "end2.txt");
+		Files.open(fname, ios::app);
+		Files << format(R * tracking_point + Pose6D.translation, cv::Formatter::FMT_CSV) << endl;
+		Files.close();
 
-	sprintf(fname, "trans2.txt");
-	Files.open(fname, ios::app);
-	Files << Pose6D.translation << endl;
-	Files.close();
+		sprintf(fname, "trans2.txt");
+		Files.open(fname, ios::app);
+		Files << format(Pose6D.translation, cv::Formatter::FMT_CSV) << endl;
+		Files.close();
+	}
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)
@@ -415,8 +429,8 @@ void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, cons
 	hconcat(camera_parameter2.Rotation, camera_parameter2.Translation, mRightRT);
 	Mat mRightM = camera_parameter2.Intrinsic * mRightRT;
 
-	undistortPoints(points_left, points_left, camera_parameter1.Intrinsic, camera_parameter1.Distortion, noArray(), camera_parameter1.Intrinsic);
-	undistortPoints(points_right, points_right, camera_parameter2.Intrinsic, camera_parameter2.Distortion, noArray(), camera_parameter2.Intrinsic);
+	//undistortPoints(points_left, points_left, camera_parameter1.Intrinsic, camera_parameter1.Distortion, noArray(), camera_parameter1.Intrinsic);
+	//undistortPoints(points_right, points_right, camera_parameter2.Intrinsic, camera_parameter2.Distortion, noArray(), camera_parameter2.Intrinsic);
 
 	for (int i = 0; i < points_left.size(); i++) {
 		// 将像素坐标转换至相机坐标

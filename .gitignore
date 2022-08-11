@@ -45,3 +45,5 @@
 /OSRVP-System/OSRVP-System/end.txt
 *.txt
 /OSRVP-System/OSRVP-System/Experiment
+/OSRVP-System/OSRVP-System/ReadMarker/DoublePnPBA.cpp
+/OSRVP-System/OSRVP-System/ReadMarker/pose_estimation_3d2d.cpp

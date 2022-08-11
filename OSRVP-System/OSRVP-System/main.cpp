@@ -95,14 +95,14 @@ void WorkThread(void* handle[5]) {
         }
         
         PoseEstimation pE;
-        //Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
+        Pose = pE.poseEstimation(corner_pos_ID, camera_parameters, model_3D, stDeviceList.nDeviceNum, HikingCamera);
         
         if (!Pose.recovery) {
-            //cout << "Fail to localize the model!" << endl;
+            cout << "Fail to localize the model!" << endl;
             imshow("image_pose", image_firstcam);
             waitKey(1);
         }
-        //dynamicROI(Pose, camera_parameters);
+        dynamicROI(Pose, camera_parameters);
 
         plotModel(image_firstcam, Pose, camera_parameters);
                 
@@ -197,8 +197,8 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
 
 void initData() {
     string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
-    string markerType = "15x14";
-    string modelName = filePath + "Model3D.txt";
+    string markerType = "18x6";
+    string modelName = filePath + "Model3D_suture.txt";
     string valueMatrixName = filePath + "valueMatrix_" + markerType + ".txt";
     string dotMarixName = filePath + "dotMatrix_" + markerType + ".txt";
     string cameraParametersName = filePath + "cameraParams.yml";
@@ -472,13 +472,13 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     
     axesPoints.clear();
     imagePoints.clear();
-    for (int i = 225; i < 233; i++)
+    for (int i = 1; i < 8; i++)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 161; i < 226; i += 16)
+    for (int i = 7; i < 134; i += 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 168; i >= 161; i--)
+    for (int i = 133; i >= 127; i--)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
-    for (int i = 232; i >= 168; i -= 16)
+    for (int i = 127; i >= 1; i -= 7)
         axesPoints.push_back(Point3f(model_3D[i][0], model_3D[i][1], model_3D[i][2]));
     
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);

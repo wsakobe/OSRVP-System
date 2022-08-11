@@ -43,7 +43,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}	
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.9);
-	
+	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
 		std::stringstream ss;
@@ -53,7 +53,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}
 	imshow("Identify", imgMark);
 	waitKey(1);
-	
+	*/
 	return corner_pos_ID;
 }
 
@@ -125,9 +125,8 @@ void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, ve
 		for (int k = 0; k < 2 * number_of_corner_y; k++) {
 			if (matrix_with_ID[label][j][k] != -1) {
 				corner_temp.label = label;
-				corner_temp.ID = (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) * (number_of_corner_y_input + 1) + value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y) + 1;
+				corner_temp.ID = 6 - (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) + (value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y)) * (number_of_corner_y_input + 1) + 1;
 				corner_temp.subpixel_pos = cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel;
-				//if (corner_temp.ID == 12) cout << corner_temp.subpixel_pos << endl;
 				corner_pos_ID.push_back(corner_temp);
 			}			
 		}
