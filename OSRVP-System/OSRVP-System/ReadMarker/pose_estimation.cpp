@@ -82,13 +82,12 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 			corners_undistort.clear();
 			for (int j = 0; j < corner_set[i].size(); j++)
 				corners_ori.push_back(corner_set[i][j].subpixel_pos);
-			cout << camera_parameters[i].Distortion << endl;
 			undistortPoints(corners_ori, corners_undistort, camera_parameters[i].Intrinsic, camera_parameters[i].Distortion, noArray(), camera_parameters[i].Intrinsic);
 			for (int j = 0; j < corner_set[i].size(); j++)
 				corner_set[i][j].subpixel_pos = corners_undistort[j];
 		}
 	}
-		
+
 	if (camera_type == HikingCamera) {
 		for (int i = 0; i < camera_num; i++) {
 			if (corner_set[i].size() > 5) {
@@ -133,7 +132,6 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 			p2 += pts2[i];
 		}
 		int n = pts1.size();
-
 		p1 = p1 / n; p2 = p2 / n;
 		Mat q_cam = Mat(3, 1, CV_32FC1);
 		Mat q_world = Mat(1, 3, CV_32FC1);
@@ -159,7 +157,6 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		tvec = pm_cam - R * pm_world;
 		
 		Rodrigues(R, rvec);
-				
 		string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
 		string cameraParametersName = filePath + "cameraParams.yml";
 		FileStorage fs(cameraParametersName, FileStorage::READ);
@@ -176,7 +173,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 			Pose6D.tracking_points.push_back(Point3f(trackingPoint.at<float>(0, 0), trackingPoint.at<float>(1, 0), trackingPoint.at<float>(2, 0)));
 		}	
 		Pose6D.recovery = true;
-
+		
 		//Print into files
 		Mat tracking_point(3, 1, CV_32FC1);
 		tracking_point.at<float>(0, 0) = Pose6D.tracking_points[0].x;
@@ -198,7 +195,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		Files.open(fname, ios::app);
 		Files << format(tvec, cv::Formatter::FMT_CSV) << endl;
 		Files.close();
-
+		
 		world_points.clear();
 		image_points.clear();
 		for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
@@ -208,8 +205,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 			}
 		}
 		vector<Point2f> imagePoints;
-		projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
-		
+		projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), imagePoints);
 		float reprojection_error = 0;
 		for (int i = 0; i < imagePoints.size(); i++) {
 			reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
@@ -226,13 +222,13 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 		}
 	}
-	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, NULL, rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
+	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
+	
 	rvec.convertTo(rvec, CV_32FC1);
 	tvec.convertTo(tvec, CV_32FC1);
 	Rodrigues(rvec, R);
 	R = camera_parameters[enough_number[0]].Rotation.t() * R;
 	Rodrigues(R, rvec);
-
 	tvec = camera_parameters[enough_number[0]].Rotation.t() * tvec - camera_parameters[enough_number[0]].Rotation.t() * camera_parameters[enough_number[0]].Translation;
 	Pose6D.rotation = rvec;
 	Pose6D.translation = tvec;
@@ -249,15 +245,13 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 		fs[TrackingPointi] >> trackingPoint;
 		Pose6D.tracking_points.push_back(Point3f(trackingPoint.at<float>(0, 0), trackingPoint.at<float>(1, 0), trackingPoint.at<float>(2, 0)));
 	}
-
 	vector<Point2f> imagePoints;
-	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
+	projectPoints(world_points, rvec, tvec, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), imagePoints);
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}		
 	cout << "EPnP RE: " << reprojection_error / imagePoints.size();
-
 	Pose6D.recovery = true;
 
 	//Print into files
@@ -291,7 +285,7 @@ void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> cor
 		planarModel.push_back(Point2f((corner_set[0][i].ID - 1) / 16 * 2, (corner_set[0][i].ID - 1) % 16 * 2));
 	}
 
-	undistortPoints(imagePoints, imagePoints_repro, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion);
+	undistortPoints(imagePoints, imagePoints_repro, camera_parameters[0].Intrinsic, NULL);
 	Mat H = findHomography(planarModel, imagePoints_repro, RANSAC, 1.0, noArray(), 100);
 	
 	// Normalization to ensure that ||c1|| = 1
@@ -336,7 +330,7 @@ void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> cor
 		planarPoints.push_back(Point3f(planarModel[i].x, planarModel[i].y, 0));
 	}
 		
-	projectPoints(planarPoints, rvec, tvec, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, image_points);
+	projectPoints(planarPoints, rvec, tvec, camera_parameters[0].Intrinsic, NULL, image_points);
 
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
@@ -358,8 +352,8 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 
 	Solver::Options options;
 	options.linear_solver_type = DENSE_SCHUR;
-	options.gradient_tolerance = 1e-16;
-	options.function_tolerance = 1e-16;
+	options.gradient_tolerance = 1e-15;
+	options.function_tolerance = 1e-15;
 	options.parameter_tolerance = 1e-10;
 	Solver::Summary summary;
 
@@ -382,7 +376,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 		}
 	}
 	vector<Point2f> imagePoints;
-	projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, camera_parameters[enough_number[0]].Distortion, imagePoints);
+	projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), imagePoints);
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
