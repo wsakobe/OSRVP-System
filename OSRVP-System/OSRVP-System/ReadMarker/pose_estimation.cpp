@@ -75,6 +75,7 @@ PoseEstimation::~PoseEstimation()
 PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num, bool camera_type)
 {
 	Pose6D.recovery = false;
+	
 	vector<Point2f> corners_ori, corners_undistort;
 	for (int i = 0; i < camera_num; i++) {
 		if (corner_set[i].size() > 5) {
@@ -87,7 +88,7 @@ PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>
 				corner_set[i][j].subpixel_pos = corners_undistort[j];
 		}
 	}
-
+	
 	if (camera_type == HikingCamera) {
 		for (int i = 0; i < camera_num; i++) {
 			if (corner_set[i].size() > 5) {
@@ -126,6 +127,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 	// pts1 -> World frame; pts2 -> Cam frame
 	if (registrated_point_cnt > 8) {
 		triangulation(imgpts1, imgpts2, pts2, camera_parameters[enough_number[0]], camera_parameters[enough_number[1]]);
+
 		Point3f p1, p2;
 		for (int i = 0; i < pts1.size(); i++) {
 			p1 += pts1[i];
@@ -383,7 +385,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	}
 	cout << "  After BA RE: " << reprojection_error / imagePoints.size() << endl;
 	
-	if (reprojection_error / imagePoints.size() < 0.5) {
+	//if (reprojection_error / imagePoints.size() < 0.5) {
 		//Print into files
 		Mat R;
 		Mat tracking_point(3, 1, CV_32FC1);
@@ -407,7 +409,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 		Files.open(fname, ios::app);
 		Files << format(Pose6D.translation, cv::Formatter::FMT_CSV) << endl;
 		Files.close();
-	}
+	//}
 }
 
 void PoseEstimation::triangulation(const std::vector<Point2f>& points_left, const std::vector<Point2f>& points_right, std::vector<Point3f>& points, CameraParams camera_parameter1, CameraParams camera_parameter2)
@@ -475,33 +477,4 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 			}
 		}
 	}
-}
-
-void CamProjectionWithDistortion(const double* const rot, const double* const trans, CameraParams cam, double* point, double* predictions)
-{
-	cv::Mat R, point_cam;
-	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_32FC1);
-	cv::Mat tvec = cv::Mat::zeros(3, 1, CV_32FC1);
-	cv::Mat point_world = cv::Mat::zeros(3, 1, CV_32FC1);
-	vector<cv::Point2f> imagePoint;
-	vector<cv::Point3f> worldPoint;
-	rvec.at<float>(0, 0) = rot[0];
-	rvec.at<float>(1, 0) = rot[1];
-	rvec.at<float>(2, 0) = rot[2];
-	tvec.at<float>(0, 0) = trans[0];
-	tvec.at<float>(1, 0) = trans[1];
-	tvec.at<float>(2, 0) = trans[2];
-	point_world.at<float>(0, 0) = point[0];
-	point_world.at<float>(1, 0) = point[1];
-	point_world.at<float>(2, 0) = point[2];
-	//cout << point[0] << ' ' << point[1] << ' ' << point[2] << endl;
-
-	Rodrigues(rvec, R);
-	point_cam = R * point_world + tvec;
-	Rodrigues(cam.Rotation, rvec);
-	imagePoint.clear();
-
-	projectPoints(point_cam, rvec, cam.Translation, cam.Intrinsic, cam.Distortion, imagePoint);
-	predictions[0] = imagePoint[0].x;
-	predictions[1] = imagePoint[0].y;
 }

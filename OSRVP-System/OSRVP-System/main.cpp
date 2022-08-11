@@ -483,8 +483,8 @@ void plotModel(Mat& image, PoseInformation Pose, vector<CameraParams> camera_par
     
     projectPoints(axesPoints, Pose.rotation, Pose.translation, camera_parameters[0].Intrinsic, camera_parameters[0].Distortion, imagePoints);
     for (int i = 1; i < axesPoints.size(); i++) {
-        line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
-        //circle(image, imagePoints[i], 2, Scalar(0, 0, 255), -1);
+        //line(imgMark, imagePoints[i - 1], imagePoints[i], Scalar(0, 224, 158), 2);
+        circle(imgMark, imagePoints[i - 1], 2, Scalar(0, 120, 220), -1);
     }
     /*
     axesPoints.clear();
