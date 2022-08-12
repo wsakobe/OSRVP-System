@@ -288,9 +288,6 @@ void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> cor
 		planarModel.push_back(Point2f((corner_set[0][i].ID - 1) % 15 * 2, (corner_set[0][i].ID - 1) / 15 * 2));
 	}
 	
-	//undistortPoints(imagePoints, imagePoints, camera_parameters[0].Intrinsic, Mat::zeros(5, 1, CV_32FC1), noArray(), Mat::eye(3, 3, CV_32FC1));
-	
-	cout << imagePoints << endl;
 	Mat H = findHomography(planarModel, imagePoints_unit);
 	
 	// Normalization to ensure that ||c1|| = 1

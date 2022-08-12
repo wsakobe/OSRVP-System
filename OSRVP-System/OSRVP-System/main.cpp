@@ -415,10 +415,10 @@ void readCamera(bool camera_type) {
                 waitKey(1);
             }
             else {
-                axesPoints.push_back(Point3f(26, 4, 0));
-                axesPoints.push_back(Point3f(26, 9, 0));
-                axesPoints.push_back(Point3f(31, 4, 0));
-                axesPoints.push_back(Point3f(26, 4, -5));
+                axesPoints.push_back(Point3f(18, 24, 0));
+                axesPoints.push_back(Point3f(18, 29, 0));
+                axesPoints.push_back(Point3f(23, 24, 0));
+                axesPoints.push_back(Point3f(18, 24, -5));
                 projectPoints(axesPoints, Pose.rotation, Pose.translation, endo_parameter[0].Intrinsic, endo_parameter[0].Distortion, imagePoints);
                 line(image, imagePoints[0], imagePoints[1], Scalar(0, 224, 158), 2);
                 line(image, imagePoints[0], imagePoints[2], Scalar(224, 0, 158), 2);
