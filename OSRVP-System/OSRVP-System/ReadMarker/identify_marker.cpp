@@ -43,7 +43,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}	
 	
 	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.9);
-	
+	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
 		std::stringstream ss;
@@ -53,7 +53,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	}
 	imshow("Identify", imgMark);
 	waitKey(1);
-	
+	*/
 	return corner_pos_ID;
 }
 
