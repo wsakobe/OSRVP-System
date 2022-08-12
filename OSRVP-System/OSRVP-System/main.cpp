@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     initData();
     google::InitGoogleLogging(argv[0]);
     
-    readCamera(HikingCamera);
+    readCamera(USBCamera);
     //readFile();
     
     destroyAllWindows();
@@ -197,7 +197,7 @@ void dynamicROI(PoseInformation Pose, vector<CameraParams> camera_parameters) {
 
 void initData() {
     string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
-    string markerType = "18x6";
+    string markerType = "15x14";
     string modelName = filePath + "Model3D_suture.txt";
     string valueMatrixName = filePath + "valueMatrix_" + markerType + ".txt";
     string dotMarixName = filePath + "dotMatrix_" + markerType + ".txt";
@@ -385,8 +385,8 @@ void readCamera(bool camera_type) {
     if (camera_type == USBCamera) {
         VideoCapture cap(0);
 
-        cap.set(CAP_PROP_FRAME_WIDTH, 1920);
-        cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
+        cap.set(CAP_PROP_FRAME_WIDTH, 1280);
+        cap.set(CAP_PROP_FRAME_HEIGHT, 720);
         cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
         
         if (!cap.isOpened())
@@ -415,10 +415,10 @@ void readCamera(bool camera_type) {
                 waitKey(1);
             }
             else {
-                axesPoints.push_back(Point3f(6, 12, 0));
-                axesPoints.push_back(Point3f(6, 17, 0));
-                axesPoints.push_back(Point3f(11, 12, 0));
-                axesPoints.push_back(Point3f(6, 12, -5));
+                axesPoints.push_back(Point3f(26, 4, 0));
+                axesPoints.push_back(Point3f(26, 9, 0));
+                axesPoints.push_back(Point3f(31, 4, 0));
+                axesPoints.push_back(Point3f(26, 4, -5));
                 projectPoints(axesPoints, Pose.rotation, Pose.translation, endo_parameter[0].Intrinsic, endo_parameter[0].Distortion, imagePoints);
                 line(image, imagePoints[0], imagePoints[1], Scalar(0, 224, 158), 2);
                 line(image, imagePoints[0], imagePoints[2], Scalar(224, 0, 158), 2);

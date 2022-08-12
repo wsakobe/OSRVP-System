@@ -212,7 +212,7 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		for (int i = 0; i < imagePoints.size(); i++) {
 			reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 		}
-		cout << "ICP RE: " << reprojection_error / imagePoints.size();
+		cout << "ICP RPE: " << reprojection_error / imagePoints.size();
 	}
 }
 
@@ -253,7 +253,7 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}		
-	cout << "EPnP RE: " << reprojection_error / imagePoints.size();
+	cout << "EPnP RPE: " << reprojection_error / imagePoints.size();
 	Pose6D.recovery = true;
 
 	//Print into files
@@ -281,14 +281,17 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 
 void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters)
 {
-	vector<Point2f> imagePoints, imagePoints_repro, planarModel;
+	vector<Point2f> imagePoints, imagePoints_unit, planarModel;
 	for (int i = 0; i < corner_set[0].size(); i++) {
 		imagePoints.push_back(corner_set[0][i].subpixel_pos);
-		planarModel.push_back(Point2f((corner_set[0][i].ID - 1) / 16 * 2, (corner_set[0][i].ID - 1) % 16 * 2));
+		imagePoints_unit.push_back(pixel2cam(imagePoints[i], camera_parameters[0].Intrinsic));
+		planarModel.push_back(Point2f((corner_set[0][i].ID - 1) % 15 * 2, (corner_set[0][i].ID - 1) / 15 * 2));
 	}
-
-	undistortPoints(imagePoints, imagePoints_repro, camera_parameters[0].Intrinsic, NULL);
-	Mat H = findHomography(planarModel, imagePoints_repro, RANSAC, 1.0, noArray(), 100);
+	
+	//undistortPoints(imagePoints, imagePoints, camera_parameters[0].Intrinsic, Mat::zeros(5, 1, CV_32FC1), noArray(), Mat::eye(3, 3, CV_32FC1));
+	
+	cout << imagePoints << endl;
+	Mat H = findHomography(planarModel, imagePoints_unit);
 	
 	// Normalization to ensure that ||c1|| = 1
 	double norm = sqrt(H.at<double>(0, 0) * H.at<double>(0, 0) +
@@ -331,14 +334,13 @@ void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> cor
 	for (int i = 0; i < imagePoints.size(); i++) {
 		planarPoints.push_back(Point3f(planarModel[i].x, planarModel[i].y, 0));
 	}
-		
-	projectPoints(planarPoints, rvec, tvec, camera_parameters[0].Intrinsic, NULL, image_points);
-
+	projectPoints(planarPoints, rvec, tvec, camera_parameters[0].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), image_points);
+	
 	float reprojection_error = 0;
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}
-	cout << "Planar RE: " << reprojection_error / imagePoints.size() << endl;
+	cout << "Planar RPE: " << reprojection_error / imagePoints.size() << endl;
 }
 
 void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
@@ -383,7 +385,7 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	for (int i = 0; i < imagePoints.size(); i++) {
 		reprojection_error += sqrt((imagePoints[i].x - image_points[i].x) * (imagePoints[i].x - image_points[i].x) + (imagePoints[i].y - image_points[i].y) * (imagePoints[i].y - image_points[i].y));
 	}
-	cout << "  After BA RE: " << reprojection_error / imagePoints.size() << endl;
+	cout << "  After BA RPE: " << reprojection_error / imagePoints.size() << endl;
 	
 	//if (reprojection_error / imagePoints.size() < 0.5) {
 		//Print into files
