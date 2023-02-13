@@ -114,7 +114,7 @@ void WorkThread(void* handle[5]) {
         Poses = pE.poseEstimation(corners_now, endo_parameter, model_3D, 1, USBCamera);
         
         if (!Poses.endo_pose.recovery) {
-            cout << "Fail to localize the opener" << endl;
+            cout << "Fail to localize the endoscope" << endl;
         }
         else {
             final_pose.endo_pose = Poses.endo_pose;
@@ -124,7 +124,7 @@ void WorkThread(void* handle[5]) {
         rm.dynamicROI(final_pose, Box[1], camera_parameters[1], model_3D, HikingCamera);
         rm.dynamicROI(final_pose, Box[2], endo_parameter[0], model_3D, USBCamera);
         plotModel(image_record, final_pose, camera_parameters, endo_parameter);
-        
+        waitKey(100);
         if (g_bExit)
         {
             break;

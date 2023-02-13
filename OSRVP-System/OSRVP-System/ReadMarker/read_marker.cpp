@@ -117,6 +117,7 @@ void ReadMarker::dynamicROI(FinalPoseInformation Poses, vector<DynamicROIBox>& B
                 Box[0].height = ImgParamsEndo.height;
                 Box[0].width = ImgParamsEndo.width;
             }
+            return;
         }
         axesPoints.clear();
         for (int i = 0; i < model_3D[2].corners.size(); i++) {

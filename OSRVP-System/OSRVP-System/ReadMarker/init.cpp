@@ -101,8 +101,8 @@ void initData() {
 
     fs["imageWidthEndo"] >> ImgParamsEndo.width;
     fs["imageHeightEndo"] >> ImgParamsEndo.height;
-    Box[2][0].height = ImgParamsOri.height;
-    Box[2][0].width = ImgParamsOri.width;
+    Box[2][0].height = ImgParamsEndo.height;
+    Box[2][0].width = ImgParamsEndo.width;
 
     string cameraMatrixEndo = "cameraMatrixEndoscopy";
     string distCoeffsEndo = "distCoeffsEndoscopy";
