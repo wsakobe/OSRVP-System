@@ -33,9 +33,15 @@
     <ClCompile Include="ReadMarker\pose_estimation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ReadMarker\read_marker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ReadMarker\init.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\pre-filter.h">
+    <ClInclude Include="include\pre_filter.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\final_election.h">
@@ -48,6 +54,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\pose_estimation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\read_marker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\init.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

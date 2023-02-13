@@ -221,5 +221,13 @@ void FinalElection::subpixelRefinement(Mat& img) {
         cornerPoints[i].point_in_subpixel.y = subpixel.at<float>(1, 0) + cornerPoints[i].point_in_pixel.y - maskSurface;
     }
 
+    for (vector<cornerInformation>::iterator it = cornerPoints.begin(); it != cornerPoints.end();)
+    {
+        if (((*it).point_in_subpixel.x < 1) || ((*it).point_in_subpixel.y < 1) || ((*it).point_in_subpixel.x > img.cols) || ((*it).point_in_subpixel.y > img.rows))
+            it = cornerPoints.erase(it);
+        else
+            it++;
+    }
+
     return;
 }

@@ -1,19 +1,10 @@
+#pragma once
 #ifndef INCLUDE_FINAL_ELECTION_H_
 #define INCLUDE_FINAL_ELECTION_H_
 
-#include "pre-filter.h"
-
-#define PI 3.1415926535
+#include "config.h"
 
 using namespace std;
-
-struct cornerInformation {
-	cv::Point   point_in_pixel;
-	cv::Point2f point_in_subpixel;
-	float angle_black_edge = -1.0;
-	float angle_white_edge = -1.0;
-	float hessian_response_score, template_response_score;
-};
 
 class FinalElection {
 public:

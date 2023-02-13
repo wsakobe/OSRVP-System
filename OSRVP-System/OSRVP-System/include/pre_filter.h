@@ -1,27 +1,10 @@
+#pragma once
 #ifndef INCLUDE_PRE_FILTER_H_
 #define INCLUDE_PRE_FILTER_H_
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-
-#include <algorithm>
-#include <cstdlib>
-#include <vector>
-#include <iostream> 
-
-#define number_of_corner_x 30
-#define number_of_corner_y 30
+#include "config.h"
 
 using namespace std;
-
-struct imageParams {	// Basic Image Parameters
-	int width, height;
-};
-
-struct cornerPreInfo {
-	cv::Point corner_position;
-	float response_score;
-};
 
 class PreFilter {
 public:

@@ -1,11 +1,7 @@
 #ifndef INCLUDE_CORNER_ARRAY_ORGANIZATION_H_
 #define INCLUDE_CORNER_ARRAY_ORGANIZATION_H_
 
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-
-#include "final_election.h"
-
+#include "config.h"
 #define MAX_DISTANCE 10000.0;
 
 struct matrixInform

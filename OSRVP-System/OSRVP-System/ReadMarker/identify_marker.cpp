@@ -3,14 +3,14 @@
 using namespace std;
 using namespace cv;
 
-vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[30])
+cornerMarkerInfo IdentifyMarker::identifyMarker(Mat& img, int *p, vector<cornerInformation> cornerPoints, struct valueMatrix *vm, int (*d)[30], bool cameraType)
 {
 	Mat imgMark(img.rows, img.cols, CV_32FC3);
 	cvtColor(img, imgMark, COLOR_GRAY2RGB);
 
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 	corner_pos_ID.clear();
-	init(p, vm, d);
+	init_data(p, vm, d);
 	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 2 * number_of_corner_x; j++)
 			for (int k = 0; k < 2 * number_of_corner_y; k++) {
@@ -42,7 +42,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 			}
 	}	
 	
-	corner_pos_ID = identifyMarkerPosRANSAC(cornerPoints, 0.9);
+	corners = identifyMarkerPosRANSAC(cornerPoints, 0.9, cameraType);
 	/*
 	for (int i = 0; i < corner_pos_ID.size(); i++) {
 		circle(imgMark, corner_pos_ID[i].subpixel_pos, 3, Scalar(255, 0, 0), -1);
@@ -54,7 +54,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarker(Mat& img, int *p, vect
 	imshow("Identify", imgMark);
 	waitKey(1);
 	*/
-	return corner_pos_ID;
+	return corners;
 }
 
 inline bool IdentifyMarker::checkLattice(int label, int x, int y)
@@ -97,7 +97,7 @@ float IdentifyMarker::recoveryMatrixRatio(int label, int x, int y, int value)
 	return (1.0 * number_succ) / (1.0 * number_all);
 }
 
-vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints, float threshold)
+cornerMarkerInfo IdentifyMarker::identifyMarkerPosRANSAC(vector<cornerInformation> cornerPoints, float threshold, bool cameraType)
 {
 	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 2 * number_of_corner_x; j++)
@@ -106,7 +106,7 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<corner
 					if (checkGrid3(i, j, k)) {
 						matrix_value = extractMatrixValue(i, j, k);
 						if (recoveryMatrixRatio(i, j, k, matrix_value) > threshold) {
-							countCornerPosWithID(i, j, k, matrix_value, cornerPoints);
+							countCornerPosWithID(i, j, k, matrix_value, cornerPoints, cameraType);
 							j = 2 * number_of_corner_x;
 							k = 2 * number_of_corner_y; //break two fors
 						}
@@ -114,13 +114,37 @@ vector<corner_pos_with_ID> IdentifyMarker::identifyMarkerPosRANSAC(vector<corner
 				}
 			}
 	}
-	return corner_pos_ID;
+	return corners;
 }
 
-void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints)
+void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, vector<cornerInformation> cornerPoints, bool cameraType)
 {
-	extern int number_of_corner_x_input, number_of_corner_y_input;
 	corner_pos_with_ID corner_temp;
+	float avg_dist = 0;
+	int edge_num = 0;
+	for (int j = 1; j < 2 * number_of_corner_x - 1; j++)
+		for (int k = 1; k < 2 * number_of_corner_y - 1; k++) {
+			if (matrix_with_ID[label][j][k] != -1) {
+				if (matrix_with_ID[label][j - 1][k] != -1) {
+					avg_dist += norm(cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel - cornerPoints[matrix_with_ID[label][j - 1][k]].point_in_subpixel);
+					edge_num++;
+				}
+				if (matrix_with_ID[label][j][k - 1] != -1) {
+					avg_dist += norm(cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel - cornerPoints[matrix_with_ID[label][j][k - 1]].point_in_subpixel);
+					edge_num++;
+				}
+				if (matrix_with_ID[label][j + 1][k] != -1) {
+					avg_dist += norm(cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel - cornerPoints[matrix_with_ID[label][j + 1][k]].point_in_subpixel);
+					edge_num++;
+				}
+				if (matrix_with_ID[label][j][k + 1] != -1) {
+					avg_dist += norm(cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel - cornerPoints[matrix_with_ID[label][j][k + 1]].point_in_subpixel);
+					edge_num++;
+				}
+			}
+		}
+	avg_dist /= edge_num;
+
 	for (int j = 0; j < 2 * number_of_corner_x; j++)
 		for (int k = 0; k < 2 * number_of_corner_y; k++) {
 			if (matrix_with_ID[label][j][k] != -1) {
@@ -128,12 +152,22 @@ void IdentifyMarker::countCornerPosWithID(int label, int x, int y, int value, ve
 				//corner_temp.ID = 6 - (value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y)) + (value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y)) * (number_of_corner_y_input + 1) + 1;
 				corner_temp.ID = value_matrix[value].pos.x + dir[value_matrix[value].dir][0] * (j - x) + dir[value_matrix[value].dir][1] * (k - y) + (value_matrix[value].pos.y + dir[value_matrix[value].dir][2] * (j - x) + dir[value_matrix[value].dir][3] * (k - y)) * (number_of_corner_y_input + 1) + 1;
 				corner_temp.subpixel_pos = cornerPoints[matrix_with_ID[label][j][k]].point_in_subpixel;
-				corner_pos_ID.push_back(corner_temp);
+				if (cameraType == USBCamera) {
+					corners.endoscope_marker.push_back(corner_temp);
+				}
+				else {
+					if (avg_dist > 30) {
+						corners.robot_marker.push_back(corner_temp);
+					}
+					else {
+						corners.opener_marker.push_back(corner_temp);
+					}
+				}				
 			}			
 		}
 }
 
-void IdentifyMarker::init(int* p, struct valueMatrix* vm, int(*d)[30])
+void IdentifyMarker::init_data(int* p, struct valueMatrix* vm, int(*d)[30])
 {
 	memset(dot_recovery, -1, sizeof(dot_recovery));
 

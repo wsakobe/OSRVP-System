@@ -5,9 +5,9 @@ using namespace cv;
 
 struct SnavelyReprojectionError
 {
-	cv::Point2d observed;
+	Point2d observed;
 	CameraParams cam;
-	cv::Point3d point_ID;
+	Point3d point_ID;
 
 	SnavelyReprojectionError(Point2d observation, CameraParams cam, Point3d point_ID) :observed(observation), cam(cam), point_ID(point_ID) {}
 
@@ -72,53 +72,94 @@ PoseEstimation::~PoseEstimation()
 {
 }
 
-PoseInformation PoseEstimation::poseEstimation(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3], unsigned int camera_num, bool camera_type)
+FinalPoseInformation PoseEstimation::poseEstimation(vector<cornerMarkerInfo> corners, vector<CameraParams> camera_parameters, vector<ModelInfo> model_3D, unsigned int camera_num, bool camera_type)
 {
-	Pose6D.recovery = false;
-	
-	vector<Point2f> corners_ori, corners_undistort;
-	for (int i = 0; i < camera_num; i++) {
-		if (corner_set[i].size() > 5) {
-			corners_ori.clear();
-			corners_undistort.clear();
-			for (int j = 0; j < corner_set[i].size(); j++)
-				corners_ori.push_back(corner_set[i][j].subpixel_pos);
-			undistortPoints(corners_ori, corners_undistort, camera_parameters[i].Intrinsic, camera_parameters[i].Distortion, noArray(), camera_parameters[i].Intrinsic);
-			for (int j = 0; j < corner_set[i].size(); j++)
-				corner_set[i][j].subpixel_pos = corners_undistort[j];
-		}
-	}
-	
 	if (camera_type == HikingCamera) {
+		// robot pose estimation
+		Pose6D.recovery = false;
+		corners_ori.clear();
+		corners_undistort.clear();
 		for (int i = 0; i < camera_num; i++) {
-			if (corner_set[i].size() > 5) {
+			if (corners[i].robot_marker.size() > 5) {
+				corners_ori.clear();
+				corners_undistort.clear();
+				for (int j = 0; j < corners[i].robot_marker.size(); j++)
+					corners_ori.push_back(corners[i].robot_marker[j].subpixel_pos);
+				undistortPoints(corners_ori, corners_undistort, camera_parameters[i].Intrinsic, camera_parameters[i].Distortion, noArray(), camera_parameters[i].Intrinsic);
+				for (int j = 0; j < corners[i].robot_marker.size(); j++)
+					corners[i].robot_marker[j].subpixel_pos = corners_undistort[j];
+			}
+		}
+		for (int i = 0; i < camera_num; i++) {
+			if (corners[i].robot_marker.size() > 5) {
 				enough_number[number_enough_corners++] = i;
 			}
 		}
-		if (number_enough_corners == 0) return Pose6D;
-		if (number_enough_corners == 1) poseEstimationMono(corner_set, camera_parameters, model_3D);
-		if (number_enough_corners == 2) poseEstimationStereo(corner_set, camera_parameters, model_3D);
+		if (number_enough_corners == 0) Pose_final.robot_pose = Pose6D;
+		if (number_enough_corners == 1) poseEstimationMono(corners, camera_parameters, model_3D[0], 0);
+		if (number_enough_corners == 2) poseEstimationStereo(corners, camera_parameters, model_3D[0], 0);
 
-		if (Pose6D.recovery)  bundleAdjustment(corner_set, camera_parameters, model_3D);
-	}
-	else if (camera_type == USBCamera) {
-		if (corner_set[0].size() > 3) {
-			poseEstimationPlanar(corner_set, camera_parameters);
+		if (Pose6D.recovery)  bundleAdjustment(corners, camera_parameters, model_3D[0], 0);
+		Pose_final.robot_pose = Pose6D;
+
+		// opener pose estimation
+		Pose6D.recovery = false;
+		corners_ori.clear();
+		corners_undistort.clear();
+		for (int i = 0; i < camera_num; i++) {
+			if (corners[i].opener_marker.size() > 5) {
+				corners_ori.clear();
+				corners_undistort.clear();
+				for (int j = 0; j < corners[i].opener_marker.size(); j++)
+					corners_ori.push_back(corners[i].opener_marker[j].subpixel_pos);
+				undistortPoints(corners_ori, corners_undistort, camera_parameters[i].Intrinsic, camera_parameters[i].Distortion, noArray(), camera_parameters[i].Intrinsic);
+				for (int j = 0; j < corners[i].opener_marker.size(); j++)
+					corners[i].opener_marker[j].subpixel_pos = corners_undistort[j];
+			}
 		}
+		for (int i = 0; i < camera_num; i++) {
+			if (corners[i].opener_marker.size() > 5) {
+				enough_number[number_enough_corners++] = i;
+			}
+		}
+		if (number_enough_corners == 0) Pose_final.opener_pose = Pose6D;
+		if (number_enough_corners == 1) poseEstimationMono(corners, camera_parameters, model_3D[1], 1);
+		if (number_enough_corners == 2) poseEstimationStereo(corners, camera_parameters, model_3D[1], 1);
+
+		if (Pose6D.recovery)  bundleAdjustment(corners, camera_parameters, model_3D[1], 1);
+		Pose_final.opener_pose = Pose6D;
+	}
+	else{
+		Pose6D.recovery = false;
+		if (corners[0].endoscope_marker.size() > 3) {
+			poseEstimationPlanar(corners[0], camera_parameters);
+		}
+		if (Pose6D.recovery)  bundleAdjustment(corners, camera_parameters, model_3D[2], 2);
+		Pose_final.opener_pose = Pose6D;
 	}
 
-	return Pose6D;
+	return Pose_final;
 }
 
-void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
+void PoseEstimation::poseEstimationStereo(vector<cornerMarkerInfo> corners, vector<CameraParams> camera_parameters, ModelInfo model_3D, int pose_type)
 {
+	corner_set.clear();
+	if (pose_type == 0) {
+		corner_set.push_back(corners[enough_number[0]].robot_marker);
+		corner_set.push_back(corners[enough_number[1]].robot_marker);
+	}
+	else {
+		corner_set.push_back(corners[enough_number[0]].opener_marker);
+		corner_set.push_back(corners[enough_number[1]].opener_marker);
+	}
+	
 	registrated_point_cnt = 0;
 	for (int i = 0; i < corner_set[enough_number[0]].size(); i++)
 		for (int j = 0; j < corner_set[enough_number[1]].size(); j++) {
-			if ((corner_set[enough_number[0]][i].ID == corner_set[enough_number[1]][j].ID) && (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2)) {
+			if ((corner_set[enough_number[0]][i].ID == corner_set[enough_number[1]][j].ID) && (abs(model_3D.corners[corner_set[enough_number[0]][i].ID].z - 0.0) > 1e-2)) {
 				imgpts1.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 				imgpts2.push_back(corner_set[enough_number[1]][j].subpixel_pos);
-				pts1.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
+				pts1.push_back(model_3D.corners[corner_set[enough_number[0]][i].ID]);
 				registrated_point_cnt++;
 				continue;
 			}
@@ -201,10 +242,8 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 		world_points.clear();
 		image_points.clear();
 		for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
-			if (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2) {
-				world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
-				image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
-			}
+			world_points.push_back(model_3D.corners[corner_set[enough_number[0]][i].ID]);
+			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 		}
 		vector<Point2f> imagePoints;
 		projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), imagePoints);
@@ -216,13 +255,19 @@ void PoseEstimation::poseEstimationStereo(vector<vector<corner_pos_with_ID>> cor
 	}
 }
 
-void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float (*model_3D)[3])
+void PoseEstimation::poseEstimationMono(vector<cornerMarkerInfo> corners, vector<CameraParams> camera_parameters, ModelInfo model_3D, int pose_type)
 {
+	corner_set.clear();
+	if (pose_type == 0) {
+		corner_set.push_back(corners[enough_number[0]].robot_marker);
+	}
+	else {
+		corner_set.push_back(corners[enough_number[0]].opener_marker);
+	}
+
 	for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
-		if (abs(model_3D[corner_set[enough_number[0]][i].ID][0] - 0.0) > 1e-2) {
-			world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
-			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
-		}
+		world_points.push_back(model_3D.corners[corner_set[enough_number[0]][i].ID]);
+		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 	}
 	solvePnPRansac(world_points, image_points, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), rvec, tvec, false, 200, 0.3, 0.8, noArray(), SOLVEPNP_EPNP);
 	
@@ -279,8 +324,11 @@ void PoseEstimation::poseEstimationMono(vector<vector<corner_pos_with_ID>> corne
 	Files.close();
 }
 
-void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters)
+void PoseEstimation::poseEstimationPlanar(cornerMarkerInfo corners, vector<CameraParams> camera_parameters)
 {
+	corner_set.clear();
+	corner_set.push_back(corners.endoscope_marker);	
+
 	vector<Point2f> imagePoints, imagePoints_unit, planarModel;
 	for (int i = 0; i < corner_set[0].size(); i++) {
 		imagePoints.push_back(corner_set[0][i].subpixel_pos);
@@ -351,8 +399,21 @@ void PoseEstimation::poseEstimationPlanar(vector<vector<corner_pos_with_ID>> cor
 	cout << "EPnP RPE: " << reprojection_error / imagePoints.size() << endl;
 }
 
-void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3])
+void PoseEstimation::bundleAdjustment(vector<cornerMarkerInfo> corners, vector<CameraParams> camera_parameters, ModelInfo model_3D, int pose_type)
 {
+	corner_set.clear();
+	if (pose_type == 0) {
+		corner_set.push_back(corners[enough_number[0]].robot_marker);
+		corner_set.push_back(corners[enough_number[1]].robot_marker);
+	}
+	else if(pose_type == 1) {
+		corner_set.push_back(corners[enough_number[0]].opener_marker);
+		corner_set.push_back(corners[enough_number[1]].opener_marker);
+	}
+	else if (pose_type == 2) {
+		corner_set.push_back(corners[0].endoscope_marker);
+	}
+
 	rot[0] = Pose6D.rotation.at<float>(0, 0);
 	rot[1] = Pose6D.rotation.at<float>(1, 0);
 	rot[2] = Pose6D.rotation.at<float>(2, 0);
@@ -382,10 +443,8 @@ void PoseEstimation::bundleAdjustment(vector<vector<corner_pos_with_ID>> corner_
 	world_points.clear();
 	image_points.clear();
 	for (int i = 0; i < corner_set[enough_number[0]].size(); i++) {
-		if (abs(model_3D[corner_set[enough_number[0]][i].ID][2] - 0.0) > 1e-2) {
-			world_points.push_back(Point3f(model_3D[corner_set[enough_number[0]][i].ID][0], model_3D[corner_set[enough_number[0]][i].ID][1], model_3D[corner_set[enough_number[0]][i].ID][2]));
-			image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
-		}
+		world_points.push_back(model_3D.corners[corner_set[enough_number[0]][i].ID]);
+		image_points.push_back(corner_set[enough_number[0]][i].subpixel_pos);
 	}
 	vector<Point2f> imagePoints;
 	projectPoints(world_points, Pose6D.rotation, Pose6D.translation, camera_parameters[enough_number[0]].Intrinsic, cv::Mat::zeros(5, 1, CV_32FC1), imagePoints);
@@ -470,7 +529,7 @@ Point2f PoseEstimation::pixel2cam(const Point2f& p, const Mat& K)
 	);
 }
 
-void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, float(*model_3D)[3]) {
+void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_with_ID>> corner_set, vector<CameraParams> camera_parameters, ModelInfo model_3D) {
 	rot[0] = Pose6D.rotation.at<float>(0, 0);
 	rot[1] = Pose6D.rotation.at<float>(1, 0);
 	rot[2] = Pose6D.rotation.at<float>(2, 0);
@@ -480,11 +539,9 @@ void PoseEstimation::buildProblem(Problem* problem, vector<vector<corner_pos_wit
 
 	for (int i = 0; i < number_enough_corners; ++i) {
 		for (int j = 0; j < corner_set[i].size(); j++) {
-			if (abs(model_3D[corner_set[i][j].ID][0] - 0.0) > 1e-2) {
-				CostFunction* cost_function;
-				cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D[corner_set[i][j].ID][0], model_3D[corner_set[i][j].ID][1], model_3D[corner_set[i][j].ID][2]));
-				problem->AddResidualBlock(cost_function, NULL, rot, trans);
-			}
+			CostFunction* cost_function;
+			cost_function = SnavelyReprojectionError::Create((Point2d)corner_set[i][j].subpixel_pos, camera_parameters[enough_number[i]], Point3d(model_3D.corners[corner_set[i][j].ID]));
+			problem->AddResidualBlock(cost_function, NULL, rot, trans);
 		}
 	}
 }

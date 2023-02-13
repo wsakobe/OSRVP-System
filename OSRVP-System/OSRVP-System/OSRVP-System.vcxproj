@@ -122,7 +122,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;GLOG_NO_ABBREVIATED_SEVERITIES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\MVS\Development\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -140,7 +140,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;GLOG_NO_ABBREVIATED_SEVERITIES;__SSE2__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
@@ -161,15 +161,20 @@
     <ClCompile Include="ReadMarker\corner_array_organization.cpp" />
     <ClCompile Include="ReadMarker\final_election.cpp" />
     <ClCompile Include="ReadMarker\identify_marker.cpp" />
+    <ClCompile Include="ReadMarker\init.cpp" />
     <ClCompile Include="ReadMarker\pose_estimation.cpp" />
     <ClCompile Include="ReadMarker\pre_filter.cpp" />
+    <ClCompile Include="ReadMarker\read_marker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\config.h" />
     <ClInclude Include="include\corner_array_organization.h" />
     <ClInclude Include="include\final_election.h" />
     <ClInclude Include="include\identify_marker.h" />
+    <ClInclude Include="include\init.h" />
     <ClInclude Include="include\pose_estimation.h" />
-    <ClInclude Include="include\pre-filter.h" />
+    <ClInclude Include="include\pre_filter.h" />
+    <ClInclude Include="include\read_marker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

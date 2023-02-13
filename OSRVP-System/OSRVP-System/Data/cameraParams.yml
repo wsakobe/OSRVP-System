@@ -50,6 +50,9 @@ Translation2: !!opencv-matrix
    dt: f
    data: [ -198.382630143389, -0.242276676521637, 8.10729214823298 ]
 
+imageWidthEndo: 1280
+imageHeightEndo: 720
+
 cameraMatrixEndoscopy: !!opencv-matrix
    rows: 3
    cols: 3
