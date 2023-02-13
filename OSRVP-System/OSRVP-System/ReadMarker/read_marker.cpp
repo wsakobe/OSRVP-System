@@ -1,4 +1,5 @@
 #include "..\include\read_marker.h"
+#include "..\include\init.h"
 
 using namespace cv;
 using namespace std;
@@ -21,6 +22,7 @@ cornerMarkerInfo ReadMarker::readMarker(Mat& image, bool cameraType, DynamicROIB
 
     PreFilter pF;
     candidate_corners = pF.preFilter(image_gray, number_of_corner_x_input * number_of_corner_y_input);
+
     // last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     FinalElection fE;
     cornerPoints = fE.finalElection(image_gray, candidate_corners);

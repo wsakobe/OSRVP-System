@@ -77,6 +77,7 @@ FinalPoseInformation PoseEstimation::poseEstimation(vector<cornerMarkerInfo> cor
 	if (camera_type == HikingCamera) {
 		// robot pose estimation
 		Pose6D.recovery = false;
+		number_enough_corners = 0;
 		corners_ori.clear();
 		corners_undistort.clear();
 		for (int i = 0; i < camera_num; i++) {
@@ -104,6 +105,7 @@ FinalPoseInformation PoseEstimation::poseEstimation(vector<cornerMarkerInfo> cor
 
 		// opener pose estimation
 		Pose6D.recovery = false;
+		number_enough_corners = 0;
 		corners_ori.clear();
 		corners_undistort.clear();
 		for (int i = 0; i < camera_num; i++) {

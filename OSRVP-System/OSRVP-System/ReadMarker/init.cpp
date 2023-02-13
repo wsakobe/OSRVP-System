@@ -4,15 +4,22 @@
 using namespace std;
 using namespace cv;
 
-void initData() {
-    int camera_number, tracking_number;
-    CameraParams cam;
-    int model_num, point_num, value;
-    int number_of_corner_x_input, number_of_corner_y_input;
-    imageParams ImgParams, ImgParamsOri, ImgParamsEndo;
-    valueMatrix value_matrix[1025];
-    int dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
+int model_num, point_num, value;
+int number_of_corner_x_input, number_of_corner_y_input;
 
+imageParams ImgParams, ImgParamsOri, ImgParamsEndo;
+
+valueMatrix value_matrix[1025];
+
+vector<ModelInfo> model_3D;
+
+int dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
+
+int camera_number, tracking_number, waste;
+CameraParams cam;
+vector<CameraParams> camera_parameters, endo_parameter;
+
+void initData() {
     string filePath = "F:\\OSRVP-System\\OSRVP-System\\OSRVP-System\\Data\\";
     string markerType = "15x14";
     string modelName = filePath + "Model3D_suture.txt";
@@ -34,7 +41,7 @@ void initData() {
         Files >> point_num;
         model_3D[j].corners.resize(point_num);
         for (int k = 0; k < point_num; k++)
-            Files >> model_3D[j].corners[k].x >> model_3D[j].corners[k].y >> model_3D[j].corners[k].z;
+            Files >> waste >> model_3D[j].corners[k].x >> model_3D[j].corners[k].y >> model_3D[j].corners[k].z;
     }
     Files.close();
 

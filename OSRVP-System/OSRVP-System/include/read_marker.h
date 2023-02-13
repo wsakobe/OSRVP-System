@@ -22,9 +22,7 @@ private:
 	Mat Rot, rvec, image_gray;
 	int BoxBorder = 30;
 	int cnt = 1, x_min = 10000, y_min = 10000, x_max = -1, y_max = -1;
-
-	int number_of_corner_x_input, number_of_corner_y_input;
-	imageParams ImgParams, ImgParamsOri, ImgParamsEndo;
+	
 	valueMatrix value_matrix[1025];
 	int dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
 	vector<cornerPreInfo> candidate_corners;

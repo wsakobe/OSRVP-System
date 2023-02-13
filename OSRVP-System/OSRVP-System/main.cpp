@@ -24,8 +24,6 @@ vector<Mat> image_record(3);
 Mat image, image_crop;
 vector<cornerMarkerInfo> corners_all;
 vector<vector<DynamicROIBox>> Box(3);
-vector<CameraParams> camera_parameters, endo_parameter;
-vector<ModelInfo> model_3D;
 FinalPoseInformation final_pose, Poses;
 
 bool g_bExit = false;
@@ -64,7 +62,6 @@ void WorkThread(void* handle[5]) {
                 for (int j = 0; j < Box[i].size(); j++) {
                     Rect roi(Box[i][j].position.x, Box[i][j].position.y, Box[i][j].width, Box[i][j].height);
                     image_crop = image(roi);
-
                     //image_crop.copyTo(mask(roi));
                     //imshow("DynamicROI", mask);
                     //waitKey(1);
@@ -124,7 +121,7 @@ void WorkThread(void* handle[5]) {
         rm.dynamicROI(final_pose, Box[1], camera_parameters[1], model_3D, HikingCamera);
         rm.dynamicROI(final_pose, Box[2], endo_parameter[0], model_3D, USBCamera);
         plotModel(image_record, final_pose, camera_parameters, endo_parameter);
-        waitKey(100);
+        
         if (g_bExit)
         {
             break;

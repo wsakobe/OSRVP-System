@@ -28,7 +28,6 @@ private:
 
 	valueMatrix value_matrix[1025];
 	int dot_matrix[2 * number_of_corner_x][2 * number_of_corner_y];
-	int number_of_corner_x_input, number_of_corner_y_input;
 };
 
 #endif

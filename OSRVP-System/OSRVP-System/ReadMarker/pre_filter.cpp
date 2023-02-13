@@ -41,15 +41,15 @@ vector<cornerPreInfo> PreFilter::preFilter(Mat& img, int number) {
                 temporal_corner.response_score = G_score_after_NMS.ptr<float>(i)[j] / G_filtermax;
                 corners.push_back(temporal_corner);
 
-                //circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
-                //std::stringstream ss;
-                //ss << std::setprecision(4) << G_score_after_NMS.ptr<float>(i)[j];
-                //string s = ss.str();
-                //putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));
+                /*circle(imgMark, Point(j, i), 3, Scalar(255, 0, 0), -1);
+                std::stringstream ss;
+                ss << std::setprecision(4) << G_score_after_NMS.ptr<float>(i)[j];
+                string s = ss.str();
+                putText(imgMark, s, Point(j, i) + Point(2, 2), FONT_ITALIC, 0.3, Scalar(0, 255, 0));*/
             }
         }	
     //imshow("imgMark", imgMark);
-    //waitKey(0);
+    //waitKey(1);
 
 	return corners;
 }

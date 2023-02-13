@@ -1,4 +1,5 @@
 #include "../include/identify_marker.h"
+#include "../include/init.h"
 
 using namespace std;
 using namespace cv;

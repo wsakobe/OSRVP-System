@@ -103,10 +103,8 @@ struct cornerPreInfo {
 };
 
 // variables
-extern int number_of_corner_x_input, number_of_corner_y_input;
-
 extern cornerMarkerInfo corners;
-extern imageParams ImgParams, ImgParamsOri, ImgParamsEndo;
+
 extern vector<cornerPreInfo> candidate_corners;
 extern vector<cornerInformation> cornerPoints;
 extern vector<corner_pos_with_ID> corner_pos;
